@@ -1437,3 +1437,16 @@ $('add').addEventListener('click',e=>{ if(view==='cal'){ e.stopImmediatePropagat
 </style>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
 </head><body></body></html>
+<style>
+/* ===== Fix mobile: intestazione e barra in basso ===== */
+.top{top:0!important;padding-top:calc(env(safe-area-inset-top,0px) + 10px)!important;padding-bottom:10px!important;margin-top:0!important;gap:10px!important}
+.title-row{display:grid!important;grid-template-columns:1fr auto!important;grid-template-rows:auto auto!important;row-gap:8px!important;column-gap:10px!important;align-items:center!important}
+.title-row h1.brand{grid-column:1/-1!important;grid-row:1!important;justify-self:center!important;font-size:1.05rem!important;letter-spacing:.24em!important;margin:0!important;line-height:1.1!important}
+.title-row h1.brand .lg{width:28px!important;height:28px!important}
+.title-row .count{grid-column:1!important;grid-row:2!important;justify-self:start!important;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.85rem!important}
+.title-row #openBackup{grid-column:2!important;grid-row:2!important;justify-self:end!important;padding:7px 14px!important;font-size:.85rem!important}
+.rows{display:grid!important;gap:8px!important}
+.chips{max-width:100%}
+#tabs button{min-width:0;overflow:hidden;white-space:nowrap;font-size:.6rem!important;padding:7px 0 6px!important}
+#tabs button svg{width:21px!important;height:21px!important}
+html,body{overflow-x:hidden}</style>
