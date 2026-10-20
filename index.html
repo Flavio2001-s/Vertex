@@ -1511,9 +1511,24 @@ body{overflow-x:clip!important;overscroll-behavior-y:none;max-width:100vw}
 (function(){ const _rc = renderCal; renderCal = function(){ const c = $('calendario'), y = window.scrollY, h = c.offsetHeight, sl = [...c.querySelectorAll('.chips')].map(e=>e.scrollLeft); if(h) c.style.minHeight = h+'px'; _rc(); [...c.querySelectorAll('.chips')].forEach((e,i)=>{ if(sl[i]) e.scrollLeft = sl[i]; }); if(h && window.scrollY!==y) window.scrollTo(0,y); c.style.minHeight = ''; };
   const _sv = setView; setView = function(v){ _sv(v); window.scrollTo(0,0); document.documentElement.scrollLeft = 0; document.body.scrollLeft = 0; }; })();
 </script>
-<style>#plist .item .sub{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}#plist .item .tags{flex-wrap:nowrap;white-space:nowrap}#plist .aptime{font-size:.74rem;padding:1px 8px;margin:0 6px 0 0}</style><script>
+<style>#plist .item .sub{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}#plist .item .tags{flex-wrap:nowrap;white-space:nowrap}#plist .aptime{font-size:.74rem;padding:1px 8px;margin:0 6px 0 0}</style><style>
+#stipendio .stipHero{background:var(--teal)!important;color:#fff;border:0!important;border-radius:26px;padding:26px 22px 22px;text-align:center;position:relative;overflow:hidden;box-shadow:0 14px 34px -12px rgba(13,148,136,.55)!important;min-height:300px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+#stipendio .stipHero::before{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.10)}
+#stipendio .stipHero::after{content:"";position:absolute;left:-70px;bottom:-90px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.07)}
+#stipendio .stipHero>*{position:relative;z-index:1}
+#stipendio .sh-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#stipendio .sh-l{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.9}
+#stipendio .sh-set{background:rgba(255,255,255,.2)!important;color:#fff!important;border:0!important;border-radius:999px;padding:7px 14px;font-weight:700;font-size:.82rem;box-shadow:none!important}
+#stipendio .sh-big{font-size:3.4rem;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:14px 0 4px}
+#stipendio .sh-pill{display:inline-block;align-self:center;background:rgba(255,255,255,.22);border-radius:999px;padding:6px 16px;font-weight:700;font-size:.95rem}
+#stipendio .sh-cells{display:grid;grid-template-columns:repeat(var(--n,2),1fr);gap:10px;margin-top:20px}
+#stipendio .sh-cells div{background:rgba(255,255,255,.16);border-radius:16px;padding:12px 6px}
+#stipendio .sh-cells span{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;opacity:.85;font-weight:700}
+#stipendio .sh-cells b{display:block;font-size:1.2rem;margin-top:4px}
+</style>
+<script>
 /* stipendio: vista essenziale (solo la stima del mese dopo) */
-(function(){ const _rs = renderStip; renderStip = function(){ _rs(); const w = $('stipendio').querySelector('.sumwrap'); if(!w) return; const ch = w.querySelector('#stipChips'); if(ch) ch.remove(); const hp = w.querySelector(':scope > p.hint'); if(hp) hp.remove(); const cards = [...w.children].filter(e=>e.classList.contains('card')); cards.slice(1).forEach(e=>e.remove()); const c = cards[0]; if(!c) return; c.querySelectorAll('.hint,.qcells').forEach(e=>e.remove()); const m = stipM, fisso = +fat.stip.fisso || 0, pt = provTot(m), pv = prevTot(m); const fn = c.querySelector('.fieldname'); if(fn) fn.textContent = 'Stipendio di ' + MESI[m].toLowerCase(); const ds = c.querySelector('.ds'); if(ds) ds.innerHTML = 'Incasso a ' + nextLabel(m).toLowerCase() + '<br>Fisso ' + eur(fisso) + ' + provvigioni ' + eur(pt) + (pv ? ' + precedenti ' + eur(pv) : ''); }; })();
+(function(){ const _rs = renderStip; renderStip = function(){ _rs(); const w = $('stipendio').querySelector('.sumwrap'); if(!w) return; const ch = w.querySelector('#stipChips'); if(ch) ch.remove(); const hp = w.querySelector(':scope > p.hint'); if(hp) hp.remove(); const cards = [...w.children].filter(e=>e.classList.contains('card')); cards.slice(1).forEach(e=>e.remove()); const c = cards[0]; if(!c) return; const m = stipM, fisso = +fat.stip.fisso || 0, pt = provTot(m), pv = prevTot(m), tot = fisso + pt + pv; c.className = 'card stipHero'; c.innerHTML = '<div class="sh-top"><span class="sh-l">Stipendio di ' + MESI[m] + '</span><button class="sh-set" id="stipSet" type="button">Compensi</button></div><div class="sh-big">' + eur(tot) + '</div><div class="sh-pill">Incasso a ' + nextLabel(m).toLowerCase() + '</div><div class="sh-cells" style="--n:' + (pv ? 3 : 2) + '"><div><span>Fisso</span><b>' + eur(fisso) + '</b></div><div><span>Provvigioni</span><b>' + eur(pt) + '</b></div>' + (pv ? '<div><span>Precedenti</span><b>' + eur(pv) + '</b></div>' : '') + '</div>'; }; })();
 </script>
 </body></html>
 <style>
