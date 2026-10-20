@@ -1476,7 +1476,18 @@ $('add').addEventListener('click',e=>{ if(view==='cal'){ e.stopImmediatePropagat
 #lock .brand .lg{width:96px;height:96px;filter:drop-shadow(0 10px 22px rgba(15,150,170,.45))}
 </style>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
-</head><body></body></html>
+</head><body><style>
+html{overflow-x:hidden;overscroll-behavior-y:none}
+body{overflow-x:clip!important;overscroll-behavior-y:none;max-width:100vw}
+#calendario{overflow-x:clip}
+#calendario .chips{overscroll-behavior-x:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+</style>
+<script>
+/* calendario: la pagina non si sposta e i filtri non la fanno saltare */
+(function(){ const _rc = renderCal; renderCal = function(){ const c = $('calendario'), y = window.scrollY, h = c.offsetHeight, sl = [...c.querySelectorAll('.chips')].map(e=>e.scrollLeft); if(h) c.style.minHeight = h+'px'; _rc(); [...c.querySelectorAll('.chips')].forEach((e,i)=>{ if(sl[i]) e.scrollLeft = sl[i]; }); if(h && window.scrollY!==y) window.scrollTo(0,y); c.style.minHeight = ''; };
+  const _sv = setView; setView = function(v){ _sv(v); window.scrollTo(0,0); document.documentElement.scrollLeft = 0; document.body.scrollLeft = 0; }; })();
+</script>
+</body></html>
 <style>
 /* ===== Fix mobile: intestazione e barra in basso ===== */
 .top{top:0!important;padding-top:calc(env(safe-area-inset-top,0px) + 10px)!important;padding-bottom:10px!important;margin-top:0!important;gap:10px!important}
