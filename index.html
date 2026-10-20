@@ -1513,7 +1513,7 @@ body{overflow-x:clip!important;overscroll-behavior-y:none;max-width:100vw}
 </script>
 <style>#plist .item .sub{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}#plist .item .tags{flex-wrap:nowrap;white-space:nowrap}#plist .aptime{font-size:.74rem;padding:1px 8px;margin:0 6px 0 0}</style><script>
 /* stipendio: vista essenziale (solo la stima del mese dopo) */
-(function(){ const _rs = renderStip; renderStip = function(){ _rs(); const w = $('stipendio').querySelector('.sumwrap'); if(!w) return; const cards = [...w.children].filter(e=>e.classList.contains('card')); cards.slice(1).forEach(e=>e.remove()); const c = cards[0]; if(c){ c.querySelectorAll('.hint,.qcells').forEach(e=>e.remove()); } const h = w.querySelector(':scope > p.hint'); if(h) h.remove(); }; })();
+(function(){ const _rs = renderStip; renderStip = function(){ _rs(); const w = $('stipendio').querySelector('.sumwrap'); if(!w) return; const ch = w.querySelector('#stipChips'); if(ch) ch.remove(); const hp = w.querySelector(':scope > p.hint'); if(hp) hp.remove(); const cards = [...w.children].filter(e=>e.classList.contains('card')); cards.slice(1).forEach(e=>e.remove()); const c = cards[0]; if(!c) return; c.querySelectorAll('.hint,.qcells').forEach(e=>e.remove()); const m = stipM, fisso = +fat.stip.fisso || 0, pt = provTot(m), pv = prevTot(m); const fn = c.querySelector('.fieldname'); if(fn) fn.textContent = 'Stipendio di ' + MESI[m].toLowerCase(); const ds = c.querySelector('.ds'); if(ds) ds.innerHTML = 'Incasso a ' + nextLabel(m).toLowerCase() + '<br>Fisso ' + eur(fisso) + ' + provvigioni ' + eur(pt) + (pv ? ' + precedenti ' + eur(pv) : ''); }; })();
 </script>
 </body></html>
 <style>
