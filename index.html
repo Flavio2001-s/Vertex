@@ -743,10 +743,11 @@ function plistHtml(){
   const q = norm(pquery.trim());
   const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q)).map((c,i)=>[c,i]).sort((a,b)=>{ const da=emiDays(a[0]), db=emiDays(b[0]), ua=da!==null&&da>=0, ub=db!==null&&db>=0; if(ua&&ub) return da-db||a[1]-b[1]; if(ua!==ub) return ua?-1:1; return a[1]-b[1]; }).map(x=>x[0]);
   if(!rows.length) return `<div class="empty">Nessun cliente trovato.</div>`;
-  return rows.map(c=>{
-    const sub = [c.azienda && c.nome ? c.azienda : '', prodTypes(c), c.emi?'Emessa '+emiFmt(c):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
-    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags">${emiPill(c)}<b>${eur(ptot(c))}</b></span>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>`;
-  }).join('');
+  const parts = c => { const l = PRODS.filter(([k])=>(c.p[k]||0)>0); return l.length ? l.map(([k,n])=>[k==='dna'?'DNA':n, c.p[k]]) : [['',0]]; };
+  return rows.flatMap(c=>parts(c).map(([lab,v])=>{
+    const sub = [lab, c.azienda && c.nome ? c.azienda : '', c.emi?'Emessa '+emiFmt(c):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
+    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags">${emiPill(c)}<b>${eur(v)}</b></span>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>`;
+  })).join('');
 }
 function renderPort(){
   $('count').textContent = `${port.length} clienti`;
