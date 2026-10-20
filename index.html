@@ -689,7 +689,7 @@ function openPolizza(id){
         if(pc){ if(!pc.pol && rec.num) pc.pol = rec.num; }
         else {
           const parts = rec.cli.split(/\s+/);
-          pc = {id:'c'+Date.now().toString(36), nome:parts[0], cognome:parts.slice(1).join(' '), azienda:'', pol:rec.num, mese:MESI[rec.m], rat:'Annuale', ssd:'', p:{pu:0,pa:0,dna:0,tcm:0,ltc:0}};
+          pc = {id:'c'+Date.now().toString(36), nome:parts[0], cognome:parts.slice(1).join(' '), azienda:'', pol:rec.num, mese:MESI[rec.m], emi:rec.d, rat:'Annuale', ssd:'', p:{pu:0,pa:0,dna:0,tcm:0,ltc:0}};
           const pk = {PU:'pu',RIC:'pa',DNA:'dna',WEL:'dna',PROT:'tcm'}[rec.k]; if(pk) pc.p[pk] = rec.v;
           port.push(pc); pnote = 'new';
         }
@@ -735,13 +735,17 @@ function openObiettivi(){
 const pname = c => [c.nome,c.cognome].filter(Boolean).join(' ') || c.azienda || '';
 const ptot = c => PRODS.reduce((s,[k])=>s+(c.p[k]||0),0);
 
+const prodTypes = c => PRODS.filter(([k])=>(c.p[k]||0)>0).map(([k,n])=>k==='dna'?'DNA':n).join(' + ');
+const emiDays = c => { if(!c.emi) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((new Date(c.emi+'T00:00:00')-t)/864e5); };
+const emiFmt = c => c.emi ? c.emi.slice(8,10)+'/'+c.emi.slice(5,7)+'/'+c.emi.slice(2,4) : '';
+const emiPill = c => { const d = emiDays(c); if(d===null || d<0 || d>30) return ''; return `<span class="aptime">${d===0?'emissione oggi':d===1?'emissione domani':'emissione tra '+d+' gg'}</span>`; };
 function plistHtml(){
   const q = norm(pquery.trim());
-  const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q));
+  const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q)).map((c,i)=>[c,i]).sort((a,b)=>{ const da=emiDays(a[0]), db=emiDays(b[0]), ua=da!==null&&da>=0, ub=db!==null&&db>=0; if(ua&&ub) return da-db||a[1]-b[1]; if(ua!==ub) return ua?-1:1; return a[1]-b[1]; }).map(x=>x[0]);
   if(!rows.length) return `<div class="empty">Nessun cliente trovato.</div>`;
   return rows.map(c=>{
-    const sub = [c.azienda && c.nome ? c.azienda : '', c.mese?'Decorrenza '+c.mese:'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
-    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags"><b>${eur(ptot(c))}</b></span>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>`;
+    const sub = [c.azienda && c.nome ? c.azienda : '', prodTypes(c), c.emi?'Emessa '+emiFmt(c):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
+    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags">${emiPill(c)}<b>${eur(ptot(c))}</b></span>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>`;
   }).join('');
 }
 function renderPort(){
@@ -771,6 +775,7 @@ function openCliente(id){
       <label class="f" for="ca">Azienda<input id="ca" value="${esc(c.azienda)}" autocomplete="off"></label>
       <label class="f" for="cp">N° polizza<input id="cp" value="${esc(c.pol)}" autocomplete="off"></label>
       <label class="f" for="cm">Mese di decorrenza<select id="cm" class="search"><option value="">–</option>${MESI.map(m=>`<option${c.mese===m?' selected':''}>${m}</option>`).join('')}</select></label>
+      <label class="f" for="ce">Data di emissione<input id="ce" type="date" value="${esc(c.emi||'')}"></label>
       <div><div class="fieldname">Rateizzo</div><div id="cr" class="catwrap">${RATE.map(r=>`<button type="button" class="chip" data-v="${r}" aria-pressed="${c.rat===r}">${r}</button>`).join('')}</div></div>
       <label class="f" for="cs">SSD EC (mese)<input id="cs" value="${esc(c.ssd)}" autocomplete="off"></label>
       <div><div class="fieldname">Premi per prodotto (€)</div><div class="grid2">${PRODS.map(([k,n])=>`<label class="f" for="pp_${k}">${n}<input id="pp_${k}" data-prod="${k}" inputmode="decimal" value="${c.p[k]?esc(numStr(c.p[k])):''}" placeholder="0"></label>`).join('')}</div></div>
@@ -783,7 +788,7 @@ function openCliente(id){
     </div></div>`;
     const keep = ()=>{
       c.nome=$('cn').value.trim(); c.cognome=$('cg').value.trim(); c.azienda=$('ca').value.trim(); c.pol=$('cp').value.trim();
-      c.mese=$('cm').value; c.ssd=$('cs').value.trim();
+      c.mese=$('cm').value; c.emi=$('ce').value; c.ssd=$('cs').value.trim();
       document.querySelectorAll('#layer [data-prod]').forEach(i=>c.p[i.dataset.prod]=num(i.value));
     };
     const tot = ()=>{ keep(); $('ctot').textContent = eur(ptot(c)); };
@@ -1487,7 +1492,7 @@ body{overflow-x:clip!important;overscroll-behavior-y:none;max-width:100vw}
 (function(){ const _rc = renderCal; renderCal = function(){ const c = $('calendario'), y = window.scrollY, h = c.offsetHeight, sl = [...c.querySelectorAll('.chips')].map(e=>e.scrollLeft); if(h) c.style.minHeight = h+'px'; _rc(); [...c.querySelectorAll('.chips')].forEach((e,i)=>{ if(sl[i]) e.scrollLeft = sl[i]; }); if(h && window.scrollY!==y) window.scrollTo(0,y); c.style.minHeight = ''; };
   const _sv = setView; setView = function(v){ _sv(v); window.scrollTo(0,0); document.documentElement.scrollLeft = 0; document.body.scrollLeft = 0; }; })();
 </script>
-</body></html>
+<style>#plist .item .sub{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}#plist .item .tags{flex-wrap:nowrap;white-space:nowrap}#plist .aptime{font-size:.74rem;padding:1px 8px;margin:0 6px 0 0}</style></body></html>
 <style>
 /* ===== Fix mobile: intestazione e barra in basso ===== */
 .top{top:0!important;padding-top:calc(env(safe-area-inset-top,0px) + 10px)!important;padding-bottom:10px!important;margin-top:0!important;gap:10px!important}
