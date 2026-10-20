@@ -1411,21 +1411,18 @@ function renderCal(){
   const base = cal.filter(inP), qSel = calPer==='all' ? -1 : isMonth(calPer) ? Math.floor(+calPer.slice(1)/3) : calPer;
   const plabel = calPer==='all' ? '' : isMonth(calPer) ? MESI[+calPer.slice(1)] + ' ' + Y : (calPer+1) + '° trimestre ' + Y;
   const fl = base.filter(a => calF==='all' || a.tipo===calF);
-  const up = fl.filter(a => calPer!=='all' || a.d >= t).sort((a,b)=>b.d.localeCompare(a.d) || (a.t||'99').localeCompare(b.t||'99'));
+  const up = fl.filter(a => calPer!=='all' || a.d >= t).sort((a,b)=>a.d.localeCompare(b.d) || (a.t||'99').localeCompare(b.t||'99'));
   const past = calPer!=='all' ? [] : fl.filter(a => a.d < t).sort((a,b)=>b.d.localeCompare(a.d) || (a.t||'').localeCompare(b.t||''));
   const today = cal.filter(a=>a.d===t).length;
   const next = cal.filter(a=>a.d>t || (a.d===t && (a.t||'99')>=nowT)).sort((a,b)=>(a.d+(a.t||'99')).localeCompare(b.d+(b.t||'99')))[0];
   const item = a => `<button class="item" data-ap="${a.id}" type="button"><div class="name">${a.t?`<span class="aptime">${esc(a.t)}</span> `:''}${esc(a.tit)}</div>${a.note?`<div class="sub">${esc(a.note)}</div>`:'<div class="sub"></div>'}<div class="tags"><span class="pill ${CALP[a.tipo]}">${CALT[a.tipo]}</span></div></button>`;
   const group = arr => { let h='', last=''; for(const a of arr){ if(a.d!==last){ last=a.d; h += `<div class="letter">${dayLabel(a.d)}</div>`; } h += item(a); } return h; };
   let h = `<div class="sumwrap">
-  <div class="card"><div class="fieldname" style="margin:0">Calendario</div>
-    <div class="big">${today}</div>
-    <div class="ds"><b>${today===1?'appuntamento':'appuntamenti'} oggi</b></div>
-    ${next?`<p class="hint" style="margin:10px 0 0"><b>Prossimo:</b> ${esc(next.tit)} · ${dayLabel(next.d)}${next.t?' alle '+esc(next.t):''}</p>`:'<p class="hint" style="margin:10px 0 0">Nessun appuntamento in arrivo.</p>'}</div>
+  <div class="card" style="padding:12px 14px"><div class="row2"><b>Oggi</b><span class="ds"><b>${today}</b> ${today===1?'appuntamento':'appuntamenti'}</span></div>
+    ${next?`<p class="hint" style="margin:6px 0 0"><b>Prossimo:</b> ${esc(next.tit)} · ${dayLabel(next.d)}${next.t?' alle '+esc(next.t):''}</p>`:'<p class="hint" style="margin:6px 0 0">Nessun appuntamento in arrivo.</p>'}</div>
+  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali']].map(([v,l])=>{ const n = v==='all' ? base.length : base.filter(a=>a.tipo===v).length; return `<button type="button" class="chip" data-f="${v}" aria-pressed="${calF===v}">${l}${n?` <b>${n}</b>`:''}</button>`; }).join('')}</div>
   <div class="chips" id="calP" style="justify-content:center;flex-wrap:wrap">${[['all','Tutto'],[0,'1° trim.'],[1,'2° trim.'],[2,'3° trim.'],[3,'4° trim.']].map(([v,l])=>`<button type="button" class="chip" data-pp="${v}" aria-pressed="${calPer===v || (isMonth(calPer) && v===qSel)}">${l}</button>`).join('')}</div>
   ${qSel>=0 ? `<div class="chips" style="justify-content:center;flex-wrap:nowrap">${[0,1,2].map(k=>qSel*3+k).map(i=>`<button type="button" class="chip" data-pp="m${i}" aria-pressed="${calPer==='m'+i}" style="flex:1">${MESI[i]}</button>`).join('')}</div>` : ''}
-  ${calSumHtml(base,plabel)}
-  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali']].map(([v,l])=>`<button type="button" class="chip" data-f="${v}" aria-pressed="${calF===v}">${l}</button>`).join('')}</div>
   <div class="list" style="margin-top:0">${up.length ? group(up) : '<div class="empty">Nessun appuntamento'+(calPer==='all'?'':' in questo periodo')+'.<br>Tocca “+ Appuntamento” per aggiungerne uno.</div>'}</div>`;
   if(past.length){
     h += `<div class="chips" style="justify-content:center"><button type="button" class="chip" id="calPast" aria-pressed="${calPast}">Passati (${past.length})</button></div>`;
@@ -1513,6 +1510,7 @@ html,body{overflow-x:hidden}</style>
 .card.contest .qc.good{background:rgba(255,255,255,.55)!important}
 .card.contest .qc.good :is(span,b){color:#7a3500!important}
 .segs{grid-template-columns:1fr 1.5fr 1fr!important}.segs button{font-size:.8rem!important;padding-inline:2px!important}
+#calF,#calP{flex-wrap:nowrap!important;justify-content:flex-start!important;overflow-x:auto}#calP .chip,#calF .chip{flex:none}
 </style>
 <style>
 /* ===== Design snello: stesse tinte, forme più sottili e compatte ===== */
