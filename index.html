@@ -356,6 +356,7 @@ $('openBackup').addEventListener('click',openBackup);
 
 /* ----- scheda contatto ----- */
 function closeLayer(){ $('layer').innerHTML=''; }
+(()=>{ const L=$('layer'), d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML'); Object.defineProperty(L,'innerHTML',{configurable:true,get(){return d.get.call(L);},set(v){ const s=L.querySelector('.sheet'), top=s?s.scrollTop:0; d.set.call(L,v); const m=L.querySelector('.sheet'); if(m&&s&&top) m.scrollTop=top; }}); })();
 function openSheet(id){
   const isNew = !id;
   const c = isNew ? {id:'n'+Date.now().toString(36), n:'', l:1, s:0, c:'', note:''} : {...contacts.find(x=>x.id===id)};
