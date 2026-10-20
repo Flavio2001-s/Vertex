@@ -973,6 +973,11 @@ const store = {
   flushAll(){ return Promise.all(DATA_KEYS.filter(k=>k in this.cache).map(k=>encText(this.cache[k]).then(c=>{ try{ localStorage.setItem(k,'enc:'+c); }catch(e){} }))); }
 };
 
+const vxDb = () => new Promise((res,rej)=>{ try{ const r = indexedDB.open('vertex-keep',1); r.onupgradeneeded = ()=>r.result.createObjectStore('k'); r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); }catch(e){ rej(e); } });
+const vxIdb = async (mode, fn) => { try{ const d = await vxDb(); return await new Promise((res,rej)=>{ const t = d.transaction('k',mode), s = t.objectStore('k'), q = fn(s); t.oncomplete = ()=>res(q&&q.result); t.onerror = ()=>rej(t.error); }); }catch(e){ return null; } };
+const keepKey = k => vxIdb('readwrite', s=>s.put(k,'key'));
+const forgetKey = () => vxIdb('readwrite', s=>s.delete('key'));
+const loadKey = () => vxIdb('readonly', s=>s.get('key'));
 function showLock(mode){
   let box = document.getElementById('lock');
   if(!box){ box = document.createElement('div'); box.id = 'lock'; document.body.appendChild(box); }
@@ -982,6 +987,7 @@ function showLock(mode){
     <label class="f" for="lu">Utente<input id="lu" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
     <label class="f" for="lp">Password${create?' (almeno 6 caratteri)':''}<input id="lp" name="password" type="password" autocomplete="${create?'new-password':'current-password'}"></label>
     ${create ? '<label class="f" for="lp2">Ripeti la password<input id="lp2" type="password" autocomplete="new-password"></label>' : ''}
+    <label style="display:flex;gap:10px;align-items:center;font-size:.92rem;margin:2px 0"><input type="checkbox" id="lrem" checked style="width:auto;margin:0"> Resta connesso su questo telefono</label>
     <div class="lockerr" id="lerr" role="alert"></div>
     <button class="btn primary" id="lgo" type="submit">${create?'Crea accesso':'Entra'}</button>
     ${create ? '' : '<button class="btn" id="lforgot" type="button">Password dimenticata</button><div id="lbox"></div>'}
@@ -1014,6 +1020,7 @@ function showLock(mode){
         }
         await store.flushAll();
       }
+      try{ if(document.getElementById('lrem').checked) await keepKey(store.k); else await forgetKey(); }catch(e){}
       box.remove(); boot();
     }catch(x){ store.k = null; err('Qualcosa non ha funzionato. Riprova.'); busy(false); }
   };
@@ -1021,7 +1028,7 @@ function showLock(mode){
     document.getElementById('lforgot').onclick = () => {
       document.getElementById('lbox').innerHTML = '<p class="hint">Senza la password i dati di questo telefono non si possono aprire. Puoi cancellarli e ricominciare, poi ripristinare un backup.</p><button class="btn danger" id="lwipe" type="button">Cancella i dati e ricomincia</button>';
       document.getElementById('lwipe').onclick = () => {
-        try{ localStorage.removeItem(LOCK_KEY); DATA_KEYS.forEach(k=>localStorage.removeItem(k)); }catch(e){}
+        forgetKey(); try{ localStorage.removeItem(LOCK_KEY); DATA_KEYS.forEach(k=>localStorage.removeItem(k)); }catch(e){}
         location.reload();
       };
     };
@@ -1049,14 +1056,14 @@ function openAccesso(){
       store.k = await deriveKey(u,p,salt,it);
       const chk = await encText('ok');
       localStorage.setItem(LOCK_KEY, JSON.stringify({salt:toB64(salt), it, chk}));
-      await store.flushAll(); closeLayer(); toast('Accesso aggiornato');
+      await store.flushAll(); if(await loadKey()) await keepKey(store.k); closeLayer(); toast('Accesso aggiornato');
     }catch(e){ toast('Non sono riuscito a salvare'); }
   };
 }
 function wireAccess(){
   const box = $('accBox'); if(!box) return;
   if(!store.k){ box.hidden = true; return; }
-  $('lockNow').onclick = () => location.reload();
+  $('lockNow').onclick = async () => { await forgetKey(); location.reload(); };
   $('chgAcc').onclick = openAccesso;
 }
 
@@ -1069,7 +1076,19 @@ document.addEventListener('visibilitychange', () => {
 (function startLock(){
   if(!(window.crypto && crypto.subtle)){ boot(); return; }
   let rec = null; try{ rec = JSON.parse(localStorage.getItem(LOCK_KEY)); }catch(e){}
-  showLock(rec ? 'login' : 'create');
+  if(!rec){ showLock('create'); return; }
+  (async()=>{
+    try{
+      const k = await loadKey();
+      if(k){
+        await decText(rec.chk, k);
+        store.k = k;
+        for(const key of DATA_KEYS){ const v = localStorage.getItem(key); if(v) store.cache[key] = v.startsWith('enc:') ? await decText(v.slice(4), k) : v; }
+        boot(); return;
+      }
+    }catch(e){ store.k = null; store.cache = {}; await forgetKey(); }
+    showLock('login');
+  })();
 })();
 </script>
 <style>
