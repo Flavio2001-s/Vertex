@@ -686,7 +686,7 @@ function openPolizza(id){
       if(!ex && rec.cli && rec.v > 0){
         const key = tokKey(rec.cli);
         let pc = port.find(x=>tokKey(pname(x))===key);
-        if(pc){ if(!pc.pol && rec.num) pc.pol = rec.num; }
+        if(pc){ if(!pc.pol && rec.num) pc.pol = rec.num; const pk0 = {PU:'pu',RIC:'pa',DNA:'dna',WEL:'dna',PROT:'tcm'}[rec.k]; if(pk0) pc.p[pk0] = (pc.p[pk0]||0) + rec.v; if(!pc.emi) pc.emi = rec.d; }
         else {
           const parts = rec.cli.split(/\s+/);
           pc = {id:'c'+Date.now().toString(36), nome:parts[0], cognome:parts.slice(1).join(' '), azienda:'', pol:rec.num, mese:MESI[rec.m], emi:rec.d, rat:'Annuale', ssd:'', p:{pu:0,pa:0,dna:0,tcm:0,ltc:0}};
@@ -741,12 +741,12 @@ const emiFmt = c => c.emi ? c.emi.slice(8,10)+'/'+c.emi.slice(5,7)+'/'+c.emi.sli
 const emiPill = c => { const d = emiDays(c); if(d===null || d<0 || d>30) return ''; return `<span class="aptime">${d===0?'emissione oggi':d===1?'emissione domani':'emissione tra '+d+' gg'}</span>`; };
 function plistHtml(){
   const q = norm(pquery.trim());
-  const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q)).map((c,i)=>[c,i]).sort((a,b)=>{ const da=emiDays(a[0]), db=emiDays(b[0]), ua=da!==null&&da>=0, ub=db!==null&&db>=0; if(ua&&ub) return da-db||a[1]-b[1]; if(ua!==ub) return ua?-1:1; return a[1]-b[1]; }).map(x=>x[0]);
+  const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q)).map((c,i)=>[c,i]).sort((a,b)=>{ const da=impDays(a[0]), db=impDays(b[0]), ua=da!==null, ub=db!==null; if(ua&&ub) return da-db||a[1]-b[1]; if(ua!==ub) return ua?-1:1; return a[1]-b[1]; }).map(x=>x[0]);
   if(!rows.length) return `<div class="empty">Nessun cliente trovato.</div>`;
   const parts = c => { const l = PRODS.filter(([k])=>(c.p[k]||0)>0); return l.length ? l.map(([k,n])=>[k==='dna'?'DNA':n, c.p[k]]) : [['',0]]; };
   return rows.flatMap(c=>parts(c).map(([lab,v])=>{
-    const sub = [lab, c.azienda && c.nome ? c.azienda : '', c.emi?'Emessa '+emiFmt(c):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
-    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags">${emiPill(c)}<b>${eur(v)}</b></span>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>`;
+    const sub = [lab, c.azienda && c.nome ? c.azienda : '', c.emi?'Emessa '+emiFmt(c):'', c.scad?'Scade '+emiFmt({emi:c.scad}):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
+    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags"><b>${eur(v)}</b></span><span class="sub">${emiPill(c)}${scadPill(c)}${esc(sub)}</span></div>`;
   })).join('');
 }
 function renderPort(){
@@ -777,6 +777,7 @@ function openCliente(id){
       <label class="f" for="cp">N° polizza<input id="cp" value="${esc(c.pol)}" autocomplete="off"></label>
       <label class="f" for="cm">Mese di decorrenza<select id="cm" class="search"><option value="">–</option>${MESI.map(m=>`<option${c.mese===m?' selected':''}>${m}</option>`).join('')}</select></label>
       <label class="f" for="ce">Data di emissione<input id="ce" type="date" value="${esc(c.emi||'')}"></label>
+      <label class="f" for="cx">Data di scadenza<input id="cx" type="date" value="${esc(c.scad||'')}"></label>
       <div><div class="fieldname">Rateizzo</div><div id="cr" class="catwrap">${RATE.map(r=>`<button type="button" class="chip" data-v="${r}" aria-pressed="${c.rat===r}">${r}</button>`).join('')}</div></div>
       <label class="f" for="cs">SSD EC (mese)<input id="cs" value="${esc(c.ssd)}" autocomplete="off"></label>
       <div><div class="fieldname">Premi per prodotto (€)</div><div class="grid2">${PRODS.map(([k,n])=>`<label class="f" for="pp_${k}">${n}<input id="pp_${k}" data-prod="${k}" inputmode="decimal" value="${c.p[k]?esc(numStr(c.p[k])):''}" placeholder="0"></label>`).join('')}</div></div>
@@ -789,7 +790,7 @@ function openCliente(id){
     </div></div>`;
     const keep = ()=>{
       c.nome=$('cn').value.trim(); c.cognome=$('cg').value.trim(); c.azienda=$('ca').value.trim(); c.pol=$('cp').value.trim();
-      c.mese=$('cm').value; c.emi=$('ce').value; c.ssd=$('cs').value.trim();
+      c.mese=$('cm').value; c.emi=$('ce').value; c.scad=$('cx').value; c.ssd=$('cs').value.trim();
       document.querySelectorAll('#layer [data-prod]').forEach(i=>c.p[i.dataset.prod]=num(i.value));
     };
     const tot = ()=>{ keep(); $('ctot').textContent = eur(ptot(c)); };
@@ -1530,6 +1531,144 @@ body{overflow-x:clip!important;overscroll-behavior-y:none;max-width:100vw}
 <script>
 /* stipendio: vista essenziale (solo la stima del mese dopo) */
 (function(){ const _rs = renderStip; renderStip = function(){ _rs(); const w = $('stipendio').querySelector('.sumwrap'); if(!w) return; const ch = w.querySelector('#stipChips'); if(ch) ch.remove(); const hp = w.querySelector(':scope > p.hint'); if(hp) hp.remove(); const cards = [...w.children].filter(e=>e.classList.contains('card')); cards.slice(1).forEach(e=>e.remove()); const c = cards[0]; if(!c) return; const m = stipM, fisso = +fat.stip.fisso || 0, pt = provTot(m), pv = prevTot(m), tot = fisso + pt + pv; c.className = 'card stipHero'; c.innerHTML = '<div class="sh-top"><span class="sh-l">Stipendio di ' + MESI[m] + '</span><button class="sh-set" id="stipSet" type="button">Compensi</button></div><div class="sh-big">' + eur(tot) + '</div><div class="sh-pill">Incasso a ' + nextLabel(m).toLowerCase() + '</div><div class="sh-cells" style="--n:' + (pv ? 3 : 2) + '"><div><span>Fisso</span><b>' + eur(fisso) + '</b></div><div><span>Provvigioni</span><b>' + eur(pt) + '</b></div>' + (pv ? '<div><span>Precedenti</span><b>' + eur(pv) + '</b></div>' : '') + '</div>'; }; })();
+</script>
+<style>
+#bkBanner{display:block;width:100%;text-align:center;background:var(--accent-soft);color:var(--accent);border:0;border-radius:12px;padding:8px 12px;font-weight:700;font-size:.85rem}
+#bkBanner[hidden]{display:none}
+.scadpill{background:#ffe3d6!important;color:#c2410c!important}
+#dupCard .kv{align-items:center;gap:8px}
+#dupCard .btn{padding:6px 12px;font-size:.82rem}
+#zsugbox{margin-top:-4px}
+#plist .sub .aptime{margin-right:8px;display:inline-block}
+</style>
+<script>
+/* ===== Backup: promemoria e condivisione ===== */
+const LB_KEY = 'vertex-lastbackup';
+function lastBk(){ try{ return +localStorage.getItem(LB_KEY) || 0; }catch(e){ return 0; } }
+function markBk(){ try{ localStorage.setItem(LB_KEY, String(Date.now())); }catch(e){} updateBk(); }
+function backupJson(){ return JSON.stringify({v:2,contatti:contacts,fatturato:fat,portafoglio:port,calendario:(typeof loadCal==='function'&&(loadCal(),cal))||[]}); }
+function updateBk(){
+  let b = document.getElementById('bkBanner');
+  if(!b){ b = document.createElement('button'); b.id = 'bkBanner'; b.type = 'button'; b.hidden = true; b.onclick = () => openBackup(); const top = document.querySelector('.top'); if(top) top.appendChild(b); }
+  const has = (typeof contacts!=='undefined' && contacts.length) || (typeof fat!=='undefined' && fat && fat.pol && fat.pol.length) || (typeof port!=='undefined' && port && port.length);
+  const t = lastBk(), days = t ? Math.floor((Date.now()-t)/864e5) : null;
+  if(!has || (t && days < 7)){ b.hidden = true; return; }
+  b.textContent = t ? `Ultimo backup ${days} giorni fa · Fai il backup` : 'Non hai ancora fatto un backup · Fallo ora';
+  b.hidden = false;
+}
+(function(){ const _r = render; render = function(){ _r(); updateBk(); }; })();
+document.addEventListener('visibilitychange', () => { if(!document.hidden) updateBk(); });
+new MutationObserver(() => {
+  const L = document.getElementById('layer');
+  const cj = document.getElementById('copyJson');
+  if(cj && !document.getElementById('shareJson')){
+    cj.addEventListener('click', () => markBk());
+    const b = document.createElement('button'); b.className = 'btn'; b.id = 'shareJson'; b.type = 'button'; b.textContent = 'Condividi backup';
+    b.onclick = async () => {
+      const txt = backupJson(), name = 'Vertex-backup-' + todayISO() + '.json';
+      try{
+        const f = new File([txt], name, {type:'application/json'});
+        if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], title:'Backup Vertex'}); markBk(); return; }
+        if(navigator.share){ await navigator.share({text:txt, title:'Backup Vertex'}); markBk(); return; }
+      }catch(e){ if(e && e.name==='AbortError') return; }
+      try{ await navigator.clipboard.writeText(txt); markBk(); toast('Backup copiato'); }catch(e){ toast('Usa “Copia backup”'); }
+    };
+    cj.parentNode.insertBefore(b, cj.nextSibling);
+    const rs = document.getElementById('restore');
+    if(rs && !document.getElementById('bkFile')){
+      const lab = document.createElement('label'); lab.className = 'f'; lab.innerHTML = 'Oppure carica un file di backup<input id="bkFile" type="file" accept=".json,.txt,application/json,text/plain">';
+      rs.parentNode.parentNode.insertBefore(lab, rs.parentNode.nextSibling);
+      lab.querySelector('input').onchange = e => { const fl = e.target.files[0]; if(!fl) return; const rd = new FileReader(); rd.onload = () => { rs.value = rd.result; toast('File caricato: tocca Ripristina'); }; rd.readAsText(fl); };
+    }
+  }
+  /* Salva e aggiungi altro prodotto */
+  const ok = document.getElementById('ok');
+  if(ok && document.getElementById('zv') && !document.getElementById('del') && !document.getElementById('okMore')){
+    const m = document.createElement('button'); m.className = 'btn'; m.id = 'okMore'; m.type = 'button'; m.textContent = 'Salva e aggiungi altro';
+    m.onclick = () => {
+      const keepV = {d:$('zd').value, cli:$('zc').value, num:$('zn').value};
+      ok.click();
+      setTimeout(() => {
+        if(document.getElementById('zv')) return;
+        openPolizza(null);
+        $('zd').value = keepV.d; $('zc').value = keepV.cli; $('zn').value = keepV.num;
+        $('zc').dispatchEvent(new Event('input',{bubbles:true}));
+        $('zv').focus();
+      }, 60);
+    };
+    ok.parentNode.insertBefore(m, ok);
+  }
+}).observe(document.getElementById('layer'), {childList:true, subtree:true});
+
+/* ===== Scadenze e imminenti ===== */
+const dayDiff = iso => { if(!iso) return null; const t = new Date(); t.setHours(0,0,0,0); return Math.round((new Date(iso+'T00:00:00')-t)/864e5); };
+const impDays = c => { const a = []; const e = dayDiff(c.emi), s = dayDiff(c.scad); if(e!==null && e>=0 && e<=30) a.push(e); if(s!==null && s>=0 && s<=60) a.push(s); return a.length ? Math.min.apply(null,a) : null; };
+const scadPill = c => { const d = dayDiff(c.scad); if(d===null || d<0 || d>60) return ''; return `<span class="aptime scadpill">${d===0?'scade oggi':d===1?'scade domani':'scadenza tra '+d+' gg'}</span>`; };
+
+/* ===== Doppioni ===== */
+const lev = (a,b) => { const m = [...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){ let p = m[0]; m[0] = i; for(let j=1;j<=b.length;j++){ const t = m[j]; m[j] = Math.min(m[j]+1, m[j-1]+1, p + (a[i-1]===b[j-1]?0:1)); p = t; } } return m[b.length]; };
+const similar = (a,b) => { const ka = tokKey(a), kb = tokKey(b); if(!ka || !kb || ka===kb) return false; if(Math.min(ka.length,kb.length) < 6) return false; return lev(ka,kb) <= (Math.min(ka.length,kb.length) < 12 ? 1 : 2); };
+const dupIgn = () => { try{ return JSON.parse(localStorage.getItem('vertex-dupign')||'[]'); }catch(e){ return []; } };
+function dupPairs(){
+  const ign = dupIgn(), out = [];
+  for(let i=0;i<port.length;i++) for(let j=i+1;j<port.length;j++){
+    const a = pname(port[i]), b = pname(port[j]); if(!a || !b) continue;
+    const id = [port[i].id, port[j].id].sort().join('|');
+    if(similar(a,b) && !ign.includes(id)) out.push([port[i], port[j], id]);
+  }
+  return out;
+}
+function mergeClients(keep, drop){
+  PRODS.forEach(([k]) => { keep.p[k] = (keep.p[k]||0) + (drop.p[k]||0); });
+  if(!keep.pol && drop.pol) keep.pol = drop.pol;
+  if(drop.emi && (!keep.emi || drop.emi < keep.emi)) keep.emi = drop.emi;
+  if(drop.scad && (!keep.scad || drop.scad < keep.scad)) keep.scad = drop.scad;
+  const kd = tokKey(pname(drop)), nk = pname(keep);
+  fat.pol.forEach(p => { if(tokKey(p.cli||'')===kd) p.cli = nk; });
+  if(drop.cid && drop.cid !== keep.cid){ contacts = contacts.filter(x => !(x.id===drop.cid && x.c==='Clienti' && !x.note)); save(); }
+  port = port.filter(x => x.id !== drop.id);
+  savePort(); saveFat();
+}
+(function(){ const _rp = renderPort; renderPort = function(){ _rp();
+  const pairs = dupPairs(), w = document.querySelector('#portafoglio .sumwrap'); if(!pairs.length || !w) return;
+  const card = document.createElement('div'); card.className = 'card'; card.id = 'dupCard';
+  card.innerHTML = '<h3>Possibili doppioni</h3><p class="hint">Nomi quasi uguali: se sono la stessa persona, uniscili.</p>' + pairs.slice(0,5).map(([a,b,id]) => `<div class="kv"><span>${esc(pname(a))} · ${esc(pname(b))}</span><b><button class="btn" data-merge="${a.id}|${b.id}" type="button">Unisci</button> <button class="btn" data-ign="${id}" type="button">Diversi</button></b></div>`).join('');
+  const first = w.querySelector('.card'); w.insertBefore(card, first ? first.nextSibling : w.firstChild);
+}; })();
+document.getElementById('portafoglio').addEventListener('click', e => {
+  const ig = e.target.closest('[data-ign]');
+  if(ig){ const l = dupIgn(); l.push(ig.dataset.ign); try{ localStorage.setItem('vertex-dupign', JSON.stringify(l)); }catch(x){} renderPort(); return; }
+  const mg = e.target.closest('[data-merge]');
+  if(mg){
+    if(!mg.dataset.sure){ mg.dataset.sure = '1'; mg.textContent = 'Tocca ancora'; return; }
+    const [ia, ib] = mg.dataset.merge.split('|'), A = port.find(x=>x.id===ia), B = port.find(x=>x.id===ib); if(!A || !B) return;
+    const ta = PRODS.reduce((s,[k])=>s+(A.p[k]||0),0), tb = PRODS.reduce((s,[k])=>s+(B.p[k]||0),0);
+    const keep = tb > ta ? B : A, drop = keep===A ? B : A;
+    mergeClients(keep, drop); renderPort(); toast('Clienti uniti');
+  }
+}, true);
+document.addEventListener('input', e => {
+  if(!e.target || e.target.id !== 'zc') return;
+  let box = document.getElementById('zsugbox');
+  if(!box){ box = document.createElement('div'); box.id = 'zsugbox'; const lab = e.target.closest('label'); lab.parentNode.insertBefore(box, lab.nextSibling); }
+  const v = e.target.value.trim(); box.innerHTML = '';
+  if(v.length < 4) return;
+  const s = clientNames().find(n => similar(n, v));
+  if(s) box.innerHTML = `<button type="button" class="chip" id="zsug">Forse intendi «${esc(s)}» · usa questo nome</button>`;
+});
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('#zsug'); if(!b) return; const z = document.getElementById('zc'); const m = b.textContent.match(/«(.*)»/); if(z && m){ z.value = m[1]; document.getElementById('zsugbox').innerHTML = ''; } });
+
+/* ===== Calendario collegato al Portafoglio ===== */
+(function(){
+  const vEv = () => { const t = todayISO(), out = [];
+    port.forEach(c => { const nm = pname(c) || 'Cliente';
+      [['emi','Emissione'],['scad','Scadenza']].forEach(([f,l]) => { if(c[f] && c[f] >= t) out.push({id:'v_'+f+'_'+c.id, d:c[f], t:'', tipo:'crm', tit:l+' · '+nm, note:'Dal Portafoglio', virt:1}); }); });
+    return out; };
+  const _rc = renderCal; renderCal = function(){ loadCal(); const real = cal; cal = real.concat(vEv()); try{ _rc(); } finally { cal = real; } };
+  const _oa = openAppt; openAppt = function(id){ if(id && String(id).startsWith('v_')){ const cid = String(id).split('_').slice(2).join('_'); if(port.some(x=>x.id===cid)){ openCliente(cid); return; } } _oa(id); };
+})();
+document.addEventListener('DOMContentLoaded', updateBk);
+setTimeout(updateBk, 1500);
 </script>
 </body></html>
 <style>
