@@ -12,17 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vertex">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="vx" viewBox="0 0 64 64"><defs>
-<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2a31"/><stop offset=".55" stop-color="#06161a"/><stop offset="1" stop-color="#020708"/></linearGradient>
-<radialGradient id="gw" cx=".12" cy=".0" r=".75"><stop offset="0" stop-color="#19d3d0" stop-opacity=".34"/><stop offset="1" stop-color="#19d3d0" stop-opacity="0"/></radialGradient>
-<radialGradient id="gs" cx=".92" cy=".0" r=".7"><stop offset="0" stop-color="#ffab3a" stop-opacity=".38"/><stop offset="1" stop-color="#ffab3a" stop-opacity="0"/></radialGradient>
-<linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b6fff6"/><stop offset=".5" stop-color="#16c4c4"/><stop offset="1" stop-color="#0a7390"/></linearGradient>
-<linearGradient id="gr" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe59a"/><stop offset=".5" stop-color="#ff9a24"/><stop offset="1" stop-color="#c9560c"/></linearGradient>
-<linearGradient id="bd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7ff0ea" stop-opacity=".8"/><stop offset=".5" stop-color="#ffffff" stop-opacity=".12"/><stop offset="1" stop-color="#ffb347" stop-opacity=".8"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#bg)"/><rect width="64" height="64" rx="15" fill="url(#gw)"/><rect width="64" height="64" rx="15" fill="url(#gs)"/><rect x="2.2" y="2.2" width="59.6" height="59.6" rx="13" fill="none" stroke="url(#bd)" stroke-width=".8"/>
-<polygon points="14,15 22.5,15 32,41.5 32,53" fill="url(#gl)"/>
-<polygon points="50,15 41.5,15 32,41.5 32,53" fill="url(#gr)"/>
-<path d="M32 41.5 L32 53" stroke="#fff" stroke-opacity=".75" stroke-width=".5"/>
-<path d="M14 15 H22.5" stroke="#eafffc" stroke-opacity=".9" stroke-width=".5"/><path d="M50 15 H41.5" stroke="#fff3cf" stroke-opacity=".9" stroke-width=".5"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="vx" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#c4161c"/><polygon points="10,14 25,14 32,36 39,14 54,14 38,52 26,52" fill="#fff"/></symbol></svg>
 <style>
 /* Layout: una colonna da telefono. Barra fissa con ricerca e filtri, elenco alfabetico, scheda a tendina per modificare. */
 :root{
@@ -596,7 +586,7 @@ function renderFat(){
       ${cells.length ? `<div class="qcells" style="grid-template-columns:repeat(${cells.length},1fr)">${cells.map(([n,v])=>`<div class="qc"><span>${n}</span><b>${n0(v)}</b></div>`).join('')}</div>` : ''}</div>`;
     for(const g of GROUPS){
       const n = gNet(g,ms), lo = gLordo(g,ms);
-      h += `<div class="card"><div class="row2"><div><h3>${g.name}</h3>${g.sub?`<div class="ds">${g.sub}</div>`:''}</div><span class="ds"><b>${fmt(pct(n,tot))}%</b></span></div>
+      h += `<div class="card ar ar-${g.id}"><div class="row2"><div><h3>${g.name}</h3>${g.sub?`<div class="ds">${g.sub}</div>`:''}</div><span class="ds"><b>${fmt(pct(n,tot))}%</b></span></div>
         <div class="big sm">${eur(n)}</div>
         <div class="ds">APE netta · premi lordi ${eur(lo)}</div>`;
       if(typeof p==='number') h += `<div class="qcells" style="grid-template-columns:repeat(3,1fr);margin-top:8px">${ms.map(m=>`<div class="qc"><span>${MESI[m].slice(0,3)}</span><b>${n0(gNet(g,[m]))}</b></div>`).join('')}</div>`;
@@ -618,7 +608,7 @@ function renderFat(){
     for(const g of GROUPS){
       const n = gNet(g,ms), t = gTarget(g,p), dd = n - t;
       h += `<div class="qrow"><div class="row2"><b>${g.name}</b><span class="${n>=t&&t>0?'good':'ds'}"><b>${fmt(pct(n,t))}%</b></span></div>
-        <div class="row2 ds"><span>${eur(n)} su ${eur(t)}</span><span class="${dd>=0?'good':'bad'}"><b>${sign(dd)}</b></span></div>${bar(pct(n,t),dd>=0?'var(--ok)':'var(--cli)')}</div>`;
+        <div class="row2 ds"><span>${eur(n)} su ${eur(t)}</span><span class="${dd>=0?'good':'bad'}"><b>${sign(dd)}</b></span></div>${bar(pct(n,t),'var(--c-'+g.id+')')}</div>`;
     }
     h += `</div>`;
     if(p==='all'){
@@ -1511,6 +1501,36 @@ html,body{overflow-x:hidden}</style>
 .card.contest .qc.good :is(span,b){color:#7a3500!important}
 .segs{grid-template-columns:1fr 1.5fr 1fr!important}.segs button{font-size:.8rem!important;padding-inline:2px!important}
 #calF,#calP{flex-wrap:nowrap!important;justify-content:flex-start!important;overflow-x:auto}#calP .chip,#calF .chip{flex:none}
+</style>
+<style>
+/* ===== Tema Rosso Generali ===== */
+:root:root{--bg:#f8f5f6;--surface:rgba(255,255,255,.80);--fg:#1b1015;--muted:#6a5a60;--line:rgba(27,16,21,.10);--accent:#c4161c;--accent-fg:#fff;--accent-soft:#c4161c1f;--glass:rgba(255,255,255,.78);--glass-line:rgba(255,255,255,.9);--glass-strong:rgba(248,245,246,.92);--sheet:#fff;--bggrad:none;--grad:linear-gradient(135deg,#b3121a,#e23a2b);--grad-sun:linear-gradient(135deg,#f6a800,#ee6a10);--glow:none;--shade:none;--cli:#1f3a8a;
+ --c-PROT:#c4161c;--c-PU:#2563eb;--c-RIC:#0f9d8f;--c-DNA:#6b4de0;--navy:linear-gradient(135deg,#16254d,#2f4f9e);--teal:linear-gradient(135deg,#0a7a74,#14b8a6)}
+body{background:var(--bg)!important}body::before{background:var(--bg)!important}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22w%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220.4%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23c4161c%22%20stop-opacity%3D%22.12%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23e23a2b%22%20stop-opacity%3D%22.03%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon%20points%3D%2210%2C14%2025%2C14%2032%2C36%2039%2C14%2054%2C14%2038%2C52%2026%2C52%22%20fill%3D%22url%28%23w%29%22/%3E%3C/svg%3E") no-repeat 62% 112%/165vw auto}
+#tabs,.fab{position:fixed}
+h1,.title-row h1.brand{background:none!important;-webkit-text-fill-color:currentColor;color:#c4161c!important}
+.fieldname,.letter,th{color:#c4161c!important}
+.card:not(.cta),.item,.chip:not([aria-pressed="true"]),.icon-btn,.search,.lvrow{background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.chip[aria-pressed="true"]{background:#c4161c!important;color:#fff!important;border-color:#c4161c!important}
+.top,#tabs{background:rgba(248,245,246,.92)!important;border-color:var(--line)!important}
+#tabs button[aria-pressed="true"]{background:#c4161c!important;color:#fff!important}
+.fab{background:var(--grad)!important;color:#fff!important}
+.segs{background:rgba(196,22,28,.08)!important;border:0!important}.segs button[aria-pressed="true"]{background:#fff!important;color:#c4161c!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.card:has(>.big:not(.sm)),.card:has(>.sechead+.big:not(.sm)){background:var(--grad)!important;border-color:transparent!important}
+.card:has(>.big:not(.sm)) :is(.fieldname,.ds,.hint,.big,.kv span,b,span,.row2){color:#fff!important}
+.card:has(>.big:not(.sm)) .qc{background:rgba(255,255,255,.16)!important;border:0!important}
+#portafoglio .card:has(>.big:not(.sm)){background:var(--navy)!important}
+#stipendio .card:has(>.sechead+.big:not(.sm)),#stipendio .card:has(>.big:not(.sm)){background:var(--teal)!important}
+.card.contest.contest:has(>.big):has(>.big){background:var(--grad-sun)!important}
+.ar{border-top:4px solid var(--ac)!important}
+.ar-PROT{--ac:var(--c-PROT)}.ar-PU{--ac:var(--c-PU)}.ar-RIC{--ac:var(--c-RIC)}.ar-DNA{--ac:var(--c-DNA)}
+.ar h3,.ar .big{color:var(--ac)!important}
+.ar .row2>span{background:color-mix(in srgb,var(--ac) 13%,#fff)!important;color:var(--ac)!important;font-weight:800}
+.pill.s1{background:#e5edff;color:#2b4fcf}
+#calendario .pill.l1{background:#eee8ff;color:#6b4de0}
+.stack{background:rgba(27,16,21,.08)}
+.card:has(>.big:not(.sm)) .pill,.card:has(>.sechead+.big:not(.sm)) .pill{background:rgba(255,255,255,.26)!important;color:#fff!important;border:0!important}
 </style>
 <style>
 /* ===== Design snello: stesse tinte, forme più sottili e compatte ===== */
