@@ -743,10 +743,10 @@ function plistHtml(){
   const q = norm(pquery.trim());
   const rows = port.filter(c=>!q || norm([pname(c),c.azienda,c.pol,c.mese,c.rat].join(' ')).includes(q)).map((c,i)=>[c,i]).sort((a,b)=>{ const da=impDays(a[0]), db=impDays(b[0]), ua=da!==null, ub=db!==null; if(ua&&ub) return da-db||a[1]-b[1]; if(ua!==ub) return ua?-1:1; return a[1]-b[1]; }).map(x=>x[0]);
   if(!rows.length) return `<div class="empty">Nessun cliente trovato.</div>`;
-  const parts = c => { const l = PRODS.filter(([k])=>(c.p[k]||0)>0); return l.length ? l.map(([k,n])=>[k==='dna'?'DNA':n, c.p[k]]) : [['',0]]; };
-  return rows.flatMap(c=>parts(c).map(([lab,v])=>{
-    const sub = [lab, c.azienda && c.nome ? c.azienda : '', c.emi?'Emessa '+emiFmt(c):'', c.scad?'Scade '+emiFmt({emi:c.scad}):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
-    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags"><b>${eur(v)}</b></span><span class="sub">${emiPill(c)}${scadPill(c)}${esc(sub)}</span></div>`;
+  const parts = c => { const l = PRODS.filter(([k])=>(c.p[k]||0)>0); return l.length ? l.map(([k,n])=>[k==='dna'?'DNA':n, c.p[k], k]) : [['',0,'']]; };
+  return rows.flatMap(c=>parts(c).map(([lab,v,pk])=>{
+    const sub = [lab, c.azienda && c.nome ? c.azienda : '', c.emi?'Emessa '+emiFmt(c):'', (pk!=='pu' && hasRenew(c) && renewDate(c))?'Rinnovo '+emiFmt({emi:renewDate(c)}).slice(0,5):'', c.rat, c.pol?'Pol. '+c.pol:''].filter(Boolean).join(' · ');
+    return `<div class="item" data-cli="${c.id}" role="button" tabindex="0"><span class="name">${esc(pname(c)||'Senza nome')}</span><span class="tags"><b>${eur(v)}</b></span><span class="sub">${emiPill(c)}${pk==='pu'?'':scadPill(c)}${esc(sub)}</span></div>`;
   })).join('');
 }
 function renderPort(){
@@ -1602,8 +1602,11 @@ new MutationObserver(() => {
 
 /* ===== Scadenze e imminenti ===== */
 const dayDiff = iso => { if(!iso) return null; const t = new Date(); t.setHours(0,0,0,0); return Math.round((new Date(iso+'T00:00:00')-t)/864e5); };
-const impDays = c => { const a = []; const e = dayDiff(c.emi), s = dayDiff(c.scad); if(e!==null && e>=0 && e<=30) a.push(e); if(s!==null && s>=0 && s<=60) a.push(s); return a.length ? Math.min.apply(null,a) : null; };
-const scadPill = c => { const d = dayDiff(c.scad); if(d===null || d<0 || d>60) return ''; return `<span class="aptime scadpill">${d===0?'scade oggi':d===1?'scade domani':'scadenza tra '+d+' gg'}</span>`; };
+const renewDate = c => { const b = c.scad || c.emi; if(!b) return null; const t = new Date(); t.setHours(0,0,0,0); const m = +b.slice(5,7)-1, d = +b.slice(8,10); let r = new Date(t.getFullYear(), m, d); if(r < t) r = new Date(t.getFullYear()+1, m, d); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
+const hasRenew = c => ['pa','dna','tcm','ltc'].some(k => (c.p && c.p[k]||0) > 0);
+const renewDays = c => { if(!hasRenew(c)) return null; const r = renewDate(c); return r ? dayDiff(r) : null; };
+const impDays = c => { const a = []; const e = dayDiff(c.emi), s = renewDays(c); if(e!==null && e>=0 && e<=30) a.push(e); if(s!==null && s>=0 && s<=60) a.push(s); return a.length ? Math.min.apply(null,a) : null; };
+const scadPill = c => { const d = renewDays(c); if(d===null || d<0 || d>60) return ''; return `<span class="aptime scadpill">${d===0?'rinnovo oggi':d===1?'rinnovo domani':'rinnovo tra '+d+' gg'}</span>`; };
 
 /* ===== Doppioni ===== */
 const lev = (a,b) => { const m = [...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){ let p = m[0]; m[0] = i; for(let j=1;j<=b.length;j++){ const t = m[j]; m[j] = Math.min(m[j]+1, m[j-1]+1, p + (a[i-1]===b[j-1]?0:1)); p = t; } } return m[b.length]; };
@@ -1662,7 +1665,8 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 (function(){
   const vEv = () => { const t = todayISO(), out = [];
     port.forEach(c => { const nm = pname(c) || 'Cliente';
-      [['emi','Emissione'],['scad','Scadenza']].forEach(([f,l]) => { if(c[f] && c[f] >= t) out.push({id:'v_'+f+'_'+c.id, d:c[f], t:'', tipo:'crm', tit:l+' · '+nm, note:'Dal Portafoglio', virt:1}); }); });
+      if(c.emi && c.emi >= t) out.push({id:'v_emi_'+c.id, d:c.emi, t:'', tipo:'crm', tit:'Emissione · '+nm, note:'Dal Portafoglio', virt:1});
+      const rd = hasRenew(c) ? renewDate(c) : null; if(rd) out.push({id:'v_scad_'+c.id, d:rd, t:'', tipo:'crm', tit:'Rinnovo · '+nm, note:'Rinnovo annuale dal Portafoglio', virt:1}); });
     return out; };
   const _rc = renderCal; renderCal = function(){ loadCal(); const real = cal; cal = real.concat(vEv()); try{ _rc(); } finally { cal = real; } };
   const _oa = openAppt; openAppt = function(id){ if(id && String(id).startsWith('v_')){ const cid = String(id).split('_').slice(2).join('_'); if(port.some(x=>x.id===cid)){ openCliente(cid); return; } } _oa(id); };
