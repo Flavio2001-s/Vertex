@@ -1406,9 +1406,9 @@ td{text-align:center}td:first-child{text-align:left;font-weight:700}
 const KC = 'master-calendario-v1';
 DATA_KEYS.push(KC);
 let cal = null, calF = 'all', calPast = false, calPer = 'all';
-const CALT = {master:'Master', crm:'CRM', recl:'Reclutamento', aff:'Affiancamento', pers:'Personale'};
-const CALP = {master:'s1', crm:'l3', recl:'l2', aff:'s2', pers:'l1'};
-const CALC = {master:'var(--accent)', crm:'var(--cli)', recl:'var(--semi)', aff:'var(--ok)', pers:'var(--freddo)'};
+const CALT = {master:'Master', crm:'CRM', recl:'Reclutamento', aff:'Affiancamento', pers:'Personale', scad:'Rinnovi'};
+const CALP = {master:'s1', crm:'l3', recl:'l2', aff:'s2', pers:'l1', scad:'s0'};
+const CALC = {master:'var(--accent)', crm:'var(--cli)', recl:'var(--semi)', aff:'var(--ok)', pers:'var(--freddo)', scad:'var(--caldo)'};
 function calSumHtml(src,label){
   loadCal(); src = src || cal; const t = todayISO(), tot = src.length, arr = src.filter(a=>a.d>=t).length;
   return `<div class="card"><h3>Riepilogo appuntamenti${label?' · '+label:''}</h3><div class="ds"><b>${tot}</b> in tutto · <b>${arr}</b> in arrivo</div><div class="list" style="margin-top:10px">${Object.entries(CALT).map(([k,n])=>{ const c = src.filter(a=>a.tipo===k), u = c.filter(a=>a.d>=t).length; return `<button class="lvrow" data-cg="${k}" type="button"><div class="lvhead"><span class="pill ${CALP[k]}">${n}</span><span class="lvn"><b>${c.length}</b> totali · ${u} in arrivo</span></div><div class="stack" aria-hidden="true"><i style="width:${tot?c.length/tot*100:0}%;background:${CALC[k]}"></i></div></button>`; }).join('')}</div></div>`;
@@ -1436,7 +1436,7 @@ function renderCal(){
   let h = `<div class="sumwrap">
   <div class="card" style="padding:12px 14px"><div class="row2"><b>Oggi</b><span class="ds"><b>${today}</b> ${today===1?'appuntamento':'appuntamenti'}</span></div>
     ${next?`<p class="hint" style="margin:6px 0 0"><b>Prossimo:</b> ${esc(next.tit)} · ${dayLabel(next.d)}${next.t?' alle '+esc(next.t):''}</p>`:'<p class="hint" style="margin:6px 0 0">Nessun appuntamento in arrivo.</p>'}</div>
-  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali']].map(([v,l])=>{ const n = v==='all' ? base.length : base.filter(a=>a.tipo===v).length; return `<button type="button" class="chip" data-f="${v}" aria-pressed="${calF===v}">${l}${n?` <b>${n}</b>`:''}</button>`; }).join('')}</div>
+  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali'],['scad','Rinnovi e scadenze']].map(([v,l])=>{ const n = v==='all' ? base.length : base.filter(a=>a.tipo===v).length; return `<button type="button" class="chip" data-f="${v}" aria-pressed="${calF===v}">${l}${n?` <b>${n}</b>`:''}</button>`; }).join('')}</div>
   <div class="chips" id="calP" style="justify-content:center;flex-wrap:wrap">${[['all','Tutto'],[0,'1° trim.'],[1,'2° trim.'],[2,'3° trim.'],[3,'4° trim.']].map(([v,l])=>`<button type="button" class="chip" data-pp="${v}" aria-pressed="${calPer===v || (isMonth(calPer) && v===qSel)}">${l}</button>`).join('')}</div>
   ${qSel>=0 ? `<div class="chips" style="justify-content:center;flex-wrap:nowrap">${[0,1,2].map(k=>qSel*3+k).map(i=>`<button type="button" class="chip" data-pp="m${i}" aria-pressed="${calPer==='m'+i}" style="flex:1">${MESI[i]}</button>`).join('')}</div>` : ''}
   <div class="list" style="margin-top:0">${up.length ? group(up) : '<div class="empty">Nessun appuntamento'+(calPer==='all'?'':' in questo periodo')+'.<br>Tocca “+ Appuntamento” per aggiungerne uno.</div>'}</div>`;
@@ -1665,8 +1665,8 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 (function(){
   const vEv = () => { const t = todayISO(), out = [];
     port.forEach(c => { const nm = pname(c) || 'Cliente';
-      if(c.emi && c.emi >= t) out.push({id:'v_emi_'+c.id, d:c.emi, t:'', tipo:'crm', tit:'Emissione · '+nm, note:'Dal Portafoglio', virt:1});
-      const rd = hasRenew(c) ? renewDate(c) : null; if(rd) out.push({id:'v_scad_'+c.id, d:rd, t:'', tipo:'crm', tit:'Rinnovo · '+nm, note:'Rinnovo annuale dal Portafoglio', virt:1}); });
+      if(c.emi && c.emi >= t) out.push({id:'v_emi_'+c.id, d:c.emi, t:'', tipo:'scad', tit:'Emissione · '+nm, note:'Dal Portafoglio', virt:1});
+      const rd = hasRenew(c) ? renewDate(c) : null; if(rd) out.push({id:'v_scad_'+c.id, d:rd, t:'', tipo:'scad', tit:'Rinnovo · '+nm, note:'Rinnovo annuale dal Portafoglio', virt:1}); });
     return out; };
   const _rc = renderCal; renderCal = function(){ loadCal(); const real = cal; cal = real.concat(vEv()); try{ _rc(); } finally { cal = real; } };
   const _oa = openAppt; openAppt = function(id){ if(id && String(id).startsWith('v_')){ const cid = String(id).split('_').slice(2).join('_'); if(port.some(x=>x.id===cid)){ openCliente(cid); return; } } _oa(id); };
