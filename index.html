@@ -564,12 +564,25 @@ function contestHtml(){
     <p class="hint" style="margin-top:10px">${full ? `Hai raggiunto il massimo: ${eur(win)}.` : (needA>0||needP>0) ? `Mancano ${needA>0?eur(needA)+' di APE':''}${needA>0&&needP>0?' e ':''}${needP>0?eur(needP)+' di Protection':''}.` : 'Soglie raggiunte.'}</p>
     <p class="hint">Il premio di ${eur(c.prem)} si moltiplica ogni ${eur(c.ape)} di APE netta con ${eur(c.prot)} di Protection, fino a ×${c.max}.</p></div>`;
 }
+var polQ = '';
+function polListHtml(){
+  const q = norm(polQ||''), pd = p => p.d || (p.y+'-'+String((p.m||0)+1).padStart(2,'0')+'-01');
+  const rows = fat.pol.filter(p=>!q || norm((p.cli||'')+' '+(p.num||'')).includes(q)).sort((a,b)=>pd(b).localeCompare(pd(a)) || String(b.id).localeCompare(String(a.id)));
+  if(!rows.length) return `<div class="empty">${fat.pol.length ? 'Nessuna polizza trovata.' : 'Nessuna polizza registrata.<br>Tocca “+ Polizza” per aggiungerne una.'}</div>`;
+  let h = '', last = '';
+  for(const p of rows){
+    const d = pd(p), ym = d.slice(0,7);
+    if(ym!==last){ last = ym; h += `<div class="letter">${MESI[+d.slice(5,7)-1]} ${d.slice(0,4)}</div>`; }
+    h += `<button class="item" data-pol="${p.id}" type="button"><div class="name">${esc(p.cli||'Senza cliente')}</div><div class="sub">${d.slice(8,10)}/${d.slice(5,7)}${p.num?' · n° '+esc(p.num):''}</div><div class="tags"><span class="pill s1">${(POLK.find(x=>x[0]===p.k)||[0,p.k])[1]}</span><b${p.v<0?' class="bad"':''}>${eur(p.v)}</b></div></button>`;
+  }
+  return h;
+}
 function renderFat(){
   fatMig(fat);
   $('count').textContent = String(fat.anno);
   const now = new Date(), qNow = now.getFullYear()===fat.anno ? Math.floor(now.getMonth()/3) : -1;
   if(obP===null) obP = qNow>=0 ? qNow : 3;
-  const tabs = `<div class="segs" id="fatTabs"><button type="button" data-ft="prod" aria-pressed="${fatTab==='prod'}">Produzione</button><button type="button" data-ft="ob" aria-pressed="${fatTab==='ob'}">Obiettivi e contest</button></div>`;
+  const tabs = `<div class="segs" id="fatTabs"><button type="button" data-ft="prod" aria-pressed="${fatTab==='prod'}">Produzione</button><button type="button" data-ft="ob" aria-pressed="${fatTab==='ob'}">Obiettivi e contest</button><button type="button" data-ft="pol" aria-pressed="${fatTab==='pol'}">Polizze</button></div>`;
   let h = `<div class="sumwrap">${tabs}`;
   if(fatTab==='prod'){
     const p = fatP, ms = mths(p);
@@ -589,6 +602,8 @@ function renderFat(){
       if(g.ks.length>1) for(const k of g.ks) h += `<div class="kv"><span>${CATN[k]}</span><b>${eur(lordoK(k,ms))} → ${eur(netK(k,ms))}</b></div>`;
       h += `</div>`;
     }
+  } else if(fatTab==='pol'){
+    h += `<input class="search" id="polQ" type="search" placeholder="Cerca cliente o n° polizza" value="${esc(polQ)}" autocomplete="off" aria-label="Cerca polizza"><div class="ds" style="text-align:center">${fat.pol.length} ${fat.pol.length===1?'polizza registrata':'polizze registrate'} · tocca per modificare o eliminare</div><div class="list" id="polList" style="margin-top:0">${polListHtml()}</div>`;
   } else {
     const p = obP, ms = mths(p);
     const tot = GROUPS.reduce((s,g)=>s+gNet(g,ms),0), tgt = apeTarget(p), d = tot - tgt;
@@ -820,6 +835,7 @@ $('portafoglio').addEventListener('click',e=>{ const it = e.target.closest('[dat
 $('portafoglio').addEventListener('input',e=>{ if(e.target.id==='pq'){ pquery = e.target.value; $('plist').innerHTML = plistHtml(); } });
 function onEnter(e){ if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('item')){ e.preventDefault(); e.target.click(); } }
 $('fatturato').addEventListener('keydown',onEnter);
+$('fatturato').addEventListener('input',e=>{ if(e.target.id==='polQ'){ polQ = e.target.value; $('polList').innerHTML = polListHtml(); } });
 $('portafoglio').addEventListener('keydown',onEnter);
 
 const PORT_LINKS = {};
@@ -1495,6 +1511,7 @@ html,body{overflow-x:hidden}</style>
 .card.contest .qc{background:rgba(255,255,255,.22)!important}
 .card.contest .qc.good{background:rgba(255,255,255,.55)!important}
 .card.contest .qc.good :is(span,b){color:#7a3500!important}
+.segs{grid-template-columns:1fr 1.5fr 1fr!important}.segs button{font-size:.8rem!important;padding-inline:2px!important}
 </style>
 <style>
 /* ===== Design snello: stesse tinte, forme più sottili e compatte ===== */
