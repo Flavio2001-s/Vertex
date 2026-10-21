@@ -380,7 +380,7 @@ function openSheet(id){
       keep(); c.n = c.n.trim().replace(/\s+/g,' ');
       if(!c.n){ $('fn').focus(); toast('Scrivi il nome e cognome'); return; }
       if(isNew) contacts.push(c); else Object.assign(contacts.find(x=>x.id===c.id), c);
-      save(); closeLayer(); render(); toast('Salvato');
+      save(); closeLayer(); render(); if(isNew) welcomeContact(c); else toast('Salvato');
     };
     if($('del')) $('del').onclick = ()=>{
       if(!confirmDel){ keep(); confirmDel=true; draw(); return; }
@@ -1167,6 +1167,13 @@ h1{font-weight:800}
 @keyframes pop{from{opacity:0;transform:scale(.7) translateY(12px)}to{opacity:1;transform:none}}
 @keyframes rain{0%{opacity:0;transform:translate(0,0) rotate(0)}8%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(var(--sw,0),105vh) rotate(720deg)}}
 @keyframes fillp{to{width:92%}}
+.mon.emo{font-size:24px;line-height:1}
+.pbadge.wave{position:relative;font:800 1.9rem/1 var(--font-display);color:#fff;animation:pbounce .8s .3s cubic-bezier(.3,1.6,.5,1) both}
+.pbadge.wave b{font-weight:800}
+.pbadge .hand{position:absolute;right:-12px;top:-10px;font-style:normal;font-size:1.9rem;transform-origin:70% 70%;animation:waveh 1s .6s ease-in-out 2}
+@keyframes waveh{0%,100%{transform:rotate(0)}20%{transform:rotate(22deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(20deg)}80%{transform:rotate(-8deg)}}
+@keyframes pbounce{0%{transform:scale(.4)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.pbadge.wave,.pbadge .hand{animation:none}}
 @media (prefers-reduced-motion:reduce){.pcard{animation:none}.mon{display:none}.pprov i::after{animation:none;width:92%}}
 
 .joke{font-size:.8rem;color:var(--muted);font-style:italic;margin-top:5px;line-height:1.35;max-width:30ch}
@@ -1226,6 +1233,27 @@ const PICON = {
 const PKIND = {PROT:'shield', PU:'star', RIC:'heart', DNA:'bolt', WEL:'sun'};
 const STAGES = ['Calcolo provvigione…','Verifica in amministrazione…','Attesa del timbro giusto…','Provvigione in liquidazione. Data: mistero.'];
 let lastJoke = '', partyTimers = [];
+/* animazione nuovo contatto */
+const WJOKES = ['Un altro nome nel Master: la rubrica ringrazia.','Ciao ciao timidezza, benvenuto nel Master!','Un contatto in più, un caffè in più da offrire.','Il Master cresce: più nomi, più occasioni.','Ora sa che esisti. Il resto è simpatia.','Nuovo arrivato! Ricordati di salutarlo davvero.','Un contatto oggi, un cliente domani (forse, ma ci crediamo).'];
+const WJOKES_CLI = ['Cliente nuovo: il portafoglio sorride!','Un cliente in più, un sorriso in più.','Benvenuto in famiglia: ora sì che si lavora!'];
+let lastWJ = '';
+function welcomeContact(c){
+  closeParty();
+  const cli = c.c==='Clienti' || c.s===2, pool = cli ? WJOKES_CLI : WJOKES;
+  let msg; do{ msg = pool[Math.floor(Math.random()*pool.length)]; }while(pool.length>1 && msg===lastWJ); lastWJ = msg;
+  const ini = (c.n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('') || '?';
+  const em = cli ? ['🤝','💶','✨','🎉'] : ['👋','😄','✨','🎉','💌'];
+  let rain = '';
+  for(let i=0;i<22;i++){ const st = `left:${(Math.random()*94).toFixed(1)}%;animation-duration:${(2.8+Math.random()*2).toFixed(2)}s;animation-delay:${(Math.random()*1.2).toFixed(2)}s;--sw:${Math.round(Math.random()*80-40)}px`; rain += `<span class="mon emo" style="${st}">${em[i%em.length]}</span>`; }
+  const el = document.createElement('div'); el.id = 'party'; el.setAttribute('role','status');
+  el.innerHTML = `${rain}<div class="pcard"><div class="pbadge wave${cli?' sun':''}"><b>${esc(ini)}</b><i class="hand" aria-hidden="true">${cli?'🤝':'👋'}</i></div>
+    <h2>${cli?'Nuovo cliente!':'Nuovo contatto!'}</h2><p class="pmsg"><b>${esc(c.n)}</b> è entrato nel Master.<br>${msg}</p>
+    <div class="pnum">Ora il Master conta <b>${contacts.length}</b> ${contacts.length===1?'persona':'persone'}</div>
+    <button class="btn primary" id="partyOk" type="button" style="width:100%;margin-top:6px">Evviva!</button></div>`;
+  document.body.appendChild(el); el.onclick = closeParty;
+  partyTimers.push(setTimeout(closeParty, 5500));
+}
+
 function closeParty(){ partyTimers.forEach(clearTimeout); partyTimers = []; const p = document.getElementById('party'); if(p) p.remove(); }
 function celebrate(rec){
   closeParty();
