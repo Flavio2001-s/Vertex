@@ -2163,3 +2163,128 @@ const act = ['summary','list','fatturato','portafoglio','stipendio','calendario'
 if(act) numAnim(act);
 })();
 </script>
+<style id="vx5css">
+/* luce che scorre sulle righe */
+.vin .item::after,.vin .hbox::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);background-size:260% 100%;background-position:130% 0;animation:vxsh 1s .25s ease-out 1 both}
+:root[data-theme="dark"] .vin .item::after,:root[data-theme="dark"] .vin .hbox::after{background-image:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.13) 50%,transparent 65%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vin .item::after,:root:not([data-theme="light"]) .vin .hbox::after{background-image:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.13) 50%,transparent 65%)}}
+@keyframes vxsh{from{background-position:130% 0;opacity:1}to{background-position:-30% 0;opacity:0}}
+.item,.hbox{position:relative}
+/* intestazioni lettera fisse */
+#list .letter,#calendario .letter{position:sticky;top:var(--topH,120px);z-index:3;background:var(--bg)!important;margin-inline:-2px;padding-inline:4px}
+/* stati vuoti */
+.empty::before{content:"";display:block;width:92px;height:92px;margin:0 auto 12px;background:var(--accent);opacity:.85;-webkit-mask:var(--ei) center/contain no-repeat;mask:var(--ei) center/contain no-repeat;animation:vxfl 3.2s ease-in-out infinite}
+@keyframes vxfl{50%{transform:translateY(-6px)}}
+:root{--ei:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 20a4 4 0 0 1 4-4h12l5 6h19a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4z' fill='none' stroke='%23000' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M24 38h16' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='13' r='3' fill='%23000'/%3E%3Ccircle cx='53' cy='20' r='1.8' fill='%23000'/%3E%3C/svg%3E")}
+/* pull to refresh */
+#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:250;width:42px;height:42px;margin-left:-21px;border-radius:50%;background:var(--surface);box-shadow:0 6px 18px rgba(0,0,0,.18);display:grid;place-items:center;opacity:0;transform:translateY(-60px);pointer-events:none}
+#ptr svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#ptr.go svg{animation:vxsp .7s linear infinite}
+@keyframes vxsp{to{transform:rotate(360deg)}}
+/* coriandoli */
+.vxc{position:fixed;top:-14px;z-index:260;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:vxcf linear forwards}
+@keyframes vxcf{to{transform:translate(var(--dx),108vh) rotate(var(--r));opacity:.9}}
+/* personalizza */
+.vxp .sw{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
+.vxp .sw button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px var(--line);padding:0}
+.vxp .sw button[aria-pressed="true"]{border-color:var(--surface);box-shadow:0 0 0 2.5px var(--accent)}
+.vxp .fs{display:flex;gap:8px;margin-top:6px}.vxp .fs button{flex:1}
+@media (prefers-reduced-motion:reduce){.empty::before,.vin .item::after,.vin .hbox::after{animation:none}.vxc{display:none}}
+</style>
+<style id="vxacc"></style>
+<script>(function(){
+const $q = (s,r) => (r||document).querySelector(s);
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---- altezza barra alta per le lettere fisse ---- */
+const top = $q('.top');
+const setTop = () => { if(top) document.documentElement.style.setProperty('--topH', Math.round(top.getBoundingClientRect().height - 1)+'px'); };
+if(top){ setTop(); try{ new ResizeObserver(setTop).observe(top); }catch(e){} addEventListener('resize',setTop); }
+/* ---- coriandoli ---- */
+const COL = ['#e23a2b','#f6a800','#2563eb','#0f9d8f','#6b4de0','#ff7aa8','#ffd23f'];
+function burst(n){
+  if(reduce()) return; n = n||60;
+  for(let i=0;i<n;i++){
+    const e = document.createElement('i'); e.className = 'vxc';
+    e.style.cssText = 'left:'+(Math.random()*100).toFixed(1)+'%;background:'+COL[i%COL.length]+';animation-duration:'+(2.2+Math.random()*1.8).toFixed(2)+'s;animation-delay:'+(Math.random()*.5).toFixed(2)+'s;--dx:'+Math.round(Math.random()*160-80)+'px;--r:'+Math.round(Math.random()*900-450)+'deg;width:'+(6+Math.random()*6).toFixed(0)+'px';
+    document.body.appendChild(e); setTimeout(()=>e.remove(),4800);
+  }
+}
+window.vxBurst = burst;
+/* contatto che diventa cliente */
+const lst = document.getElementById('list');
+if(lst) lst.addEventListener('click', e => {
+  const b = e.target.closest('[data-cycle="s"]'); if(!b) return;
+  const c = contacts.find(x=>x.id===b.dataset.id); if(!c) return; const was = c.s;
+  setTimeout(()=>{ const c2 = contacts.find(x=>x.id===b.dataset.id); if(c2 && was!==2 && c2.s===2){ burst(70); try{ toast(c2.n+' è un nuovo cliente!'); }catch(_){} try{ navigator.vibrate&&navigator.vibrate(12); }catch(_){} } },60);
+});
+/* obiettivo annuo raggiunto */
+const _cel = celebrate;
+celebrate = function(rec){
+  let before = 0, goal = 0, hit = false;
+  try{ goal = +fat.apeAnno||0; const now = GROUPS.reduce((s,g)=>s+gNet(g,mths('all')),0); before = now - rec.v*fat.coef[rec.k]; hit = goal>0 && rec.v>0 && rec.y===fat.anno && before<goal && now>=goal; }catch(_){}
+  _cel(rec);
+  if(hit) setTimeout(()=>{ burst(110); try{ toast('Obiettivo annuo raggiunto!'); }catch(_){} },900);
+};
+/* ---- pull to refresh ---- */
+const pt = document.createElement('div'); pt.id = 'ptr'; pt.setAttribute('aria-hidden','true');
+pt.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+document.body.appendChild(pt);
+let y0 = null, dy = 0, busy = false;
+addEventListener('touchstart', e => { y0 = (scrollY<=0 && !busy && !document.querySelector('#layer .sheet') && e.touches.length===1) ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+addEventListener('touchmove', e => {
+  if(y0===null) return; dy = e.touches[0].clientY - y0;
+  if(dy>8 && scrollY<=0){ const k = Math.min(dy,110); pt.style.opacity = Math.min(1,k/60); pt.style.transform = 'translateY('+(k*.7-60)+'px) rotate('+(k*3)+'deg)'; } else if(dy<=8){ pt.style.opacity = 0; }
+}, {passive:true});
+addEventListener('touchend', () => {
+  if(y0===null) return; const go = dy>85; y0 = null;
+  if(!go){ pt.style.opacity = 0; pt.style.transform = 'translateY(-60px)'; return; }
+  busy = true; pt.classList.add('go'); pt.style.transform = 'translateY(14px)'; pt.style.opacity = 1;
+  try{ navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{}); }catch(_){}
+  setTimeout(()=>{ try{ render(); }catch(_){} try{ window.numAnim && numAnim(['summary','list','fatturato','portafoglio','stipendio','calendario'].map(i=>document.getElementById(i)).find(s=>s&&!s.hidden)); }catch(_){} try{ toast('Aggiornato'); }catch(_){}
+    pt.classList.remove('go'); pt.style.opacity = 0; pt.style.transform = 'translateY(-60px)'; busy = false; }, 800);
+}, {passive:true});
+/* ---- personalizzazione ---- */
+const ACC = [['Rosso',null],['Blu','#2563eb'],['Verde','#0f9d8f'],['Viola','#6b4de0'],['Arancio','#e8730c'],['Rosa','#d6336c']];
+const FS = [['A−',.92],['A',1],['A+',1.1]];
+const rd = (k,d) => { try{ return localStorage.getItem(k) || d; }catch(_){ return d; } };
+const wr = (k,v) => { try{ localStorage.setItem(k,v); }catch(_){} };
+function darkNow(){ const t = document.documentElement.dataset.theme; return t==='dark' || (t!=='light' && matchMedia('(prefers-color-scheme: dark)').matches); }
+function syncMeta(){
+  const m = $q('meta[name="theme-color"]'); if(!m) return; const a = rd('vx-acc','');
+  m.setAttribute('content', darkNow() ? '#150d10' : (a || '#c4161c'));
+}
+function applyLook(){
+  const a = rd('vx-acc',''), f = parseFloat(rd('vx-fs','1')) || 1, st = document.getElementById('vxacc');
+  let css = f!==1 ? 'html{font-size:'+(16*f).toFixed(2)+'px}' : '';
+  if(a){
+    const L = 'color-mix(in srgb,'+a+' 62%,#fff)';
+    const rules = c => ':root:root:root{--accent:'+c+'!important;--accent-soft:color-mix(in srgb,'+c+' 14%,transparent)!important;--grad:linear-gradient(135deg,color-mix(in srgb,'+a+' 82%,#000),'+a+')!important}'
+      +'h1,.title-row h1.brand,.fieldname,.letter,th{color:'+c+'!important}'
+      +'.chip[aria-pressed="true"],#tabs button[aria-pressed="true"]{background:'+a+'!important;border-color:'+a+'!important;color:#fff!important}'
+      +'.segs{background:color-mix(in srgb,'+a+' 9%,transparent)!important}';
+    css += rules(a);
+    css += ':root[data-theme="dark"]{--vxd:1}:root[data-theme="dark"] :is(h1,.title-row h1.brand,.fieldname,.letter,th){color:'+L+'!important}';
+    css += '@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) :is(h1,.title-row h1.brand,.fieldname,.letter,th){color:'+L+'!important}}';
+  }
+  if(st){ st.textContent = css; document.body.appendChild(st); }
+  syncMeta();
+}
+applyLook();
+try{ new MutationObserver(syncMeta).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncMeta); }catch(_){}
+const _rs5 = renderSummary;
+renderSummary = function(){
+  _rs5();
+  const w = $q('#summary .sumwrap'); if(!w) return;
+  const a = rd('vx-acc',''), f = rd('vx-fs','1');
+  const card = document.createElement('div'); card.className = 'card vxp';
+  card.innerHTML = '<div class="fieldname">Personalizza</div><div class="sw" role="group" aria-label="Colore principale">'+ACC.map(([n,c])=>'<button type="button" data-acc="'+(c||'')+'" aria-label="'+n+'" aria-pressed="'+((c||'')===a)+'" style="background:'+(c||'#c4161c')+'"></button>').join('')+'</div>'
+    +'<div class="fieldname" style="margin-top:2px">Dimensione testo</div><div class="fs">'+FS.map(([n,v])=>'<button type="button" class="btn" data-fs="'+v+'" aria-pressed="'+(parseFloat(f)===v)+'">'+n+'</button>').join('')+'</div>';
+  w.appendChild(card);
+  card.addEventListener('click', e => {
+    const b = e.target.closest('[data-acc]'), s = e.target.closest('[data-fs]');
+    if(b){ wr('vx-acc', b.dataset.acc); applyLook(); card.querySelectorAll('[data-acc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); try{ navigator.vibrate&&navigator.vibrate(6); }catch(_){} }
+    else if(s){ wr('vx-fs', s.dataset.fs); applyLook(); card.querySelectorAll('[data-fs]').forEach(x=>x.setAttribute('aria-pressed',String(x===s))); setTimeout(setTop,60); }
+  });
+};
+})();
+</script>
