@@ -1958,7 +1958,7 @@ const animateView = () => {
   const kids = sec.classList.contains('list') ? [...sec.children] : [...(sec.querySelector('.sumwrap')||sec).children];
   kids.slice(0,14).forEach((k,i)=>{ k.classList.add('vst'); k.style.setProperty('--i',i); });
   sec.classList.remove('vin'); void sec.offsetWidth; sec.classList.add('vin');
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches) sec.querySelectorAll('.big').forEach(countUp);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches) (window.numAnim||function(){})(sec);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ sec.querySelectorAll('.mchart').forEach(c=>c.classList.add('go')); sec.querySelectorAll('.ring .pg').forEach(c=>c.style.strokeDashoffset = c.dataset.off); }));
 };
 const _sv = setView; setView = function(v){ animNext = true; _sv(v); animateView(); buzz(6); };
@@ -2113,5 +2113,53 @@ const _rst = renderStip; renderStip = function(){
 };
 
 animateView();
+})();
+</script>
+<style id="vx3css">
+#tabs button svg{transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+#tabs button{transition:transform .15s ease,background .2s ease,color .2s ease}
+#tabs button:active{transform:scale(.94)}
+#tabs button:active svg{transform:scale(.82)}
+#tabs button[aria-pressed="true"] svg{transform:scale(1.16) translateY(-1px);animation:tabpop .45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes tabpop{0%{transform:scale(.8)}55%{transform:scale(1.3)}100%{transform:scale(1.16) translateY(-1px)}}
+#plist .item[data-cli]{position:relative;padding-left:66px;min-height:62px}
+#plist .item[data-cli] .av{pointer-events:none}
+@media (prefers-reduced-motion:reduce){#tabs button[aria-pressed="true"] svg{animation:none}}
+</style>
+<script>(function(){
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RX = /(\d{1,3}(?:\.\d{3})+|\d+)(,\d+)?(\s?(?:€|%))/g;
+const fmtIt = (v,d) => { const s = Math.abs(v).toFixed(d), p = s.split('.'); return p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.') + (p[1] ? ','+p[1] : ''); };
+window.numAnim = function(root){
+  if(!root || reduce()) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>{ const p = n.parentNode; if(!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|OPTION)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT; RX.lastIndex = 0; return RX.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }});
+  const jobs = []; let n;
+  while((n = w.nextNode())){
+    const src = n.nodeValue, parts = []; let last = 0, m; RX.lastIndex = 0;
+    while((m = RX.exec(src))){ parts.push({pre:src.slice(last,m.index), end:parseFloat(m[1].replace(/\./g,'')+(m[2]?'.'+m[2].slice(1):'')), dec:m[2]?m[2].length-1:0, suf:m[3]}); last = m.index + m[0].length; }
+    jobs.push({n, src, parts, tail:src.slice(last)});
+  }
+  if(!jobs.length) return;
+  const t0 = performance.now(), D = 850;
+  const step = t => {
+    const k = Math.min(1,(t-t0)/D), e = 1-Math.pow(1-k,3);
+    jobs.forEach(j=>{ if(!j.n.parentNode) return; j.n.nodeValue = k>=1 ? j.src : j.parts.map(p=>p.pre+fmtIt(p.end*e,p.dec)+p.suf).join('')+j.tail; });
+    if(k<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+};
+const ini = n => String(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('') || '?';
+const lv = s => { let h = 0; for(const ch of String(s)) h = (h*31 + ch.charCodeAt(0)) % 997; return h%3+1; };
+const esc2 = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const _ph = plistHtml;
+plistHtml = function(){
+  return _ph().replace(/<div class="item" data-cli="([^"]+)" role="button" tabindex="0">/g, (m,id)=>{
+    const c = port.find(x=>x.id===id); if(!c) return m; const nm = pname(c) || '?';
+    return m + '<span class="av l'+lv(nm)+'" aria-hidden="true">'+esc2(ini(nm))+'</span>';
+  });
+};
+['fatturato','stipendio','calendario'].forEach(id=>{ const s = document.getElementById(id); if(s) s.addEventListener('click', e=>{ if(e.target.closest('[aria-pressed]')) setTimeout(()=>numAnim(s),40); }); });
+const act = ['summary','list','fatturato','portafoglio','stipendio','calendario'].map(i=>document.getElementById(i)).find(s=>s && !s.hidden);
+if(act) numAnim(act);
 })();
 </script>
