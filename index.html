@@ -2295,3 +2295,170 @@ const tap = () => { try{ if(navigator.vibrate){ navigator.vibrate(8); return; } 
 document.addEventListener('click', e => { if(e.target.closest && e.target.closest('button,.chip,.item,.pill,[role="button"],a.btn,#tabs')) tap(); }, true);
 })();
 </script>
+<style id="vx7css">
+/* ---- calendario a griglia ---- */
+.vtog.segs{grid-template-columns:1fr 1fr!important}
+.cgh{display:flex;align-items:center;gap:8px}
+.cgh b{flex:1;text-align:center;font:800 1.1rem var(--font-display);letter-spacing:-.01em}
+.cgh button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;min-width:42px;height:40px;font:800 1.2rem/1 var(--font-display);padding:0 10px}
+.cgh button.td{font-size:.8rem;font-weight:800;color:var(--accent)}
+.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;touch-action:pan-y}
+.cg .wd{text-align:center;font:800 .7rem var(--font-display);color:var(--muted);padding:2px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+.cg .dy{aspect-ratio:1/1.12;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:7px 0 0;font:800 .95rem/1 var(--font-display);color:var(--fg);position:relative;transition:transform .12s,background .15s}
+.cg .dy:active{transform:scale(.92)}
+.cg .dy.out{opacity:.32}
+.cg .dy.we:not(.sel){color:var(--muted)}
+.cg .dy.today:not(.sel){box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent)}
+.cg .dy.sel{background:var(--accent);color:#fff;border-color:transparent;transform:scale(1.04);box-shadow:0 6px 16px -6px var(--accent)}
+.cg .dy.has{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.cg .dy.sel.has{background:var(--accent)}
+.cg .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:88%;min-height:7px}
+.cg .dots i{width:7px;height:7px;border-radius:50%;display:block}
+.cg .dy.sel .dots i{box-shadow:0 0 0 1.5px #fff}
+.cg .dots u{text-decoration:none;font-size:.58rem;font-weight:800;line-height:7px}
+.cgl{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:.74rem;color:var(--muted)}
+.cgl span{display:inline-flex;align-items:center;gap:5px}.cgl i{width:8px;height:8px;border-radius:50%}
+.cgd{display:grid;gap:8px}
+.cgd h3{margin:0;font:800 1rem var(--font-display);text-align:left}
+/* ---- filtri compatti ---- */
+.frow{display:flex;gap:8px;align-items:stretch}
+.frow .search{flex:1;min-width:0}
+#fBtn{display:inline-flex;align-items:center;gap:6px;font-weight:800;white-space:nowrap;padding:0 14px;border-radius:14px}
+#fBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#fBadge{min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#fff;font-size:.7rem;display:inline-grid;place-items:center;padding:0 5px}
+#fBadge:empty{display:none}
+#listTools:not(.open) .rows{display:none!important}
+#listTools.open .rows{animation:vxdrop .25s ease both}
+@keyframes vxdrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#bkBanner{padding:5px 10px!important;font-size:.78rem!important;border-radius:10px!important}
+/* ---- benvenuto dopo l'accesso ---- */
+#hello{position:fixed;inset:0;z-index:310;display:grid;place-content:center;justify-items:center;gap:12px;text-align:center;background:linear-gradient(160deg,#c4161c 0%,#8f0f14 100%);color:#fff;transition:opacity .6s ease,visibility .6s;padding:24px}
+#hello.out{opacity:0;visibility:hidden}
+#hello svg{width:84px;height:84px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));animation:spl .9s cubic-bezier(.2,1.5,.4,1) both}
+#hello h2{margin:0;font:800 2rem/1.1 var(--font-display);animation:splt .7s .3s ease both}
+#hello p{margin:0;opacity:.9;font-size:1.02rem;animation:splt .7s .5s ease both}
+#hello i{display:block;width:120px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);overflow:hidden;position:relative;margin-top:6px}
+#hello i::after{content:"";position:absolute;inset:0;width:0;background:#fff;animation:splb 1.3s .2s ease forwards}
+#lock form{animation:splt .7s ease both}
+#lock .brand .lg{animation:spl .9s cubic-bezier(.2,1.5,.4,1) both}
+@media (prefers-reduced-motion:reduce){#hello svg,#hello h2,#hello p,#hello i::after,#lock form,#lock .brand .lg{animation:none}#hello i::after{width:100%}}
+</style>
+<script id="vx7js">(function(){
+const $q = (s,r) => (r||document).querySelector(s);
+const rd = (k,d) => { try{ return localStorage.getItem(k) || d; }catch(_){ return d; } };
+const wr = (k,v) => { try{ localStorage.setItem(k,v); }catch(_){} };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+/* ================= CALENDARIO: elenco / mese ================= */
+let calV = rd('vx-calv','mese'), now0 = new Date(), gy = now0.getFullYear(), gm = now0.getMonth(), gd = todayISO();
+const WD = ['L','M','M','G','V','S','D'];
+const pad = n => String(n).padStart(2,'0');
+const iso = (y,m,d) => y+'-'+pad(m+1)+'-'+pad(d);
+const vEv2 = () => { const t = todayISO(), out = [];
+  port.forEach(c => { const nm = pname(c) || 'Cliente';
+    if(c.emi && c.emi >= t) out.push({id:'v_emi_'+c.id, d:c.emi, t:'', tipo:'scad', tit:'Emissione · '+nm, note:'Dal Portafoglio', virt:1});
+    const rdt = hasRenew(c) ? renewDate(c) : null; if(rdt) out.push({id:'v_scad_'+c.id, d:rdt, t:'', tipo:'scad', tit:'Rinnovo · '+nm, note:'Rinnovo annuale dal Portafoglio', virt:1}); });
+  return out; };
+const itemH = a => `<button class="item" data-ap="${a.id}" type="button"><div class="name">${a.t?`<span class="aptime">${esc(a.t)}</span> `:''}${esc(a.tit)}</div>${a.note?`<div class="sub">${esc(a.note)}</div>`:'<div class="sub"></div>'}<div class="tags"><span class="pill ${CALP[a.tipo]}">${CALT[a.tipo]}</span></div></button>`;
+function gridHtml(){
+  loadCal();
+  const evs = cal.concat(vEv2()).filter(a => calF==='all' || calF.split(',').includes(a.tipo));
+  const by = {}; evs.forEach(a => (by[a.d] = by[a.d] || []).push(a));
+  const first = new Date(gy,gm,1), lead = (first.getDay()+6)%7, dim = new Date(gy,gm+1,0).getDate(), t = todayISO();
+  let cells = '';
+  for(let i=0;i<42;i++){
+    const dt = new Date(gy,gm,1-lead+i), d = iso(dt.getFullYear(),dt.getMonth(),dt.getDate()), out = dt.getMonth()!==gm;
+    if(i>=35 && out && i%7===0) break;
+    const l = (by[d]||[]).slice().sort((a,b)=>(a.t||'').localeCompare(b.t||'')), ks = [...new Set(l.map(a=>a.tipo))];
+    const dots = ks.slice(0,4).map(k=>`<i style="background:${CALC[k]}"></i>`).join('') + (l.length>ks.length||ks.length>4 ? `<u>+</u>` : '');
+    const wk = dt.getDay()===0||dt.getDay()===6;
+    cells += `<button type="button" class="dy${out?' out':''}${d===t?' today':''}${d===gd?' sel':''}${l.length?' has':''}${wk?' we':''}" data-gd="${d}" aria-label="${dt.getDate()} ${MESI[dt.getMonth()]}${l.length?', '+l.length+' appuntamenti':''}">${dt.getDate()}<span class="dots">${dots}</span></button>`;
+  }
+  const dayEv = (by[gd]||[]).slice().sort((a,b)=>(a.t||'99').localeCompare(b.t||'99'));
+  const leg = Object.entries(CALT).map(([k,n])=>`<span><i style="background:${CALC[k]}"></i>${n}</span>`).join('');
+  return `<div class="cgh"><button type="button" data-gn="-1" aria-label="Mese precedente">‹</button><b>${MESI[gm]} ${gy}</b><button type="button" data-gn="1" aria-label="Mese successivo">›</button><button type="button" class="td" data-gn="0">Oggi</button></div>
+  <div class="cg" id="cgrid">${WD.map(w=>`<div class="wd">${w}</div>`).join('')}${cells}</div>
+  <div class="cgl">${leg}</div>
+  <div class="cgd"><h3>${dayLabel(gd)}</h3>${dayEv.length ? dayEv.map(itemH).join('') : '<div class="empty" style="padding:18px 8px">Giornata libera! Tocca “+ Appuntamento” per riempirla.</div>'}</div>`;
+}
+const _rc7 = renderCal;
+renderCal = function(){
+  _rc7();
+  const w = $q('#calendario .sumwrap'); if(!w) return;
+  const f = document.getElementById('calF'); if(!f) return;
+  const tog = document.createElement('div'); tog.className = 'segs vtog'; tog.setAttribute('role','group'); tog.setAttribute('aria-label','Vista');
+  tog.innerHTML = `<button type="button" data-vm="mese" aria-pressed="${calV==='mese'}">Mese</button><button type="button" data-vm="elenco" aria-pressed="${calV==='elenco'}">Elenco</button>`;
+  f.before(tog);
+  if(calV==='mese'){
+    let n = f.nextElementSibling; while(n){ const x = n.nextElementSibling; n.remove(); n = x; }
+    const box = document.createElement('div'); box.style.display = 'grid'; box.style.gap = '12px'; box.innerHTML = gridHtml(); w.appendChild(box);
+    let sx = null; const g = box.querySelector('#cgrid');
+    g.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+    g.addEventListener('touchend', e => { if(sx===null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if(Math.abs(dx)>60) nav(dx<0?1:-1); }, {passive:true});
+  }
+};
+function nav(k){
+  if(k===0){ const n = new Date(); gy = n.getFullYear(); gm = n.getMonth(); gd = todayISO(); }
+  else { gm += k; if(gm>11){ gm = 0; gy++; } if(gm<0){ gm = 11; gy--; } const dim = new Date(gy,gm+1,0).getDate(); const sd = +gd.slice(8,10); gd = iso(gy,gm,Math.min(sd,dim)); }
+  renderCal();
+}
+$('calendario').addEventListener('click', e => {
+  const v = e.target.closest('[data-vm]'); if(v){ calV = v.dataset.vm; wr('vx-calv',calV); renderCal(); return; }
+  const n = e.target.closest('[data-gn]'); if(n){ nav(+n.dataset.gn); return; }
+  const d = e.target.closest('[data-gd]'); if(d){ gd = d.dataset.gd; const dt = new Date(gd+'T12:00:00'); gy = dt.getFullYear(); gm = dt.getMonth(); renderCal(); const p = document.querySelector('.cgd'); if(p){ const y = p.getBoundingClientRect().top + scrollY - (innerHeight - 330); if(y>scrollY) window.scrollTo({top:y,behavior:'smooth'}); } }
+});
+const _oa7 = openAppt;
+openAppt = function(id){ _oa7(id); if(!id && calV==='mese' && gd){ const el = document.getElementById('ad'); if(el) el.value = gd; } };
+
+/* ================= MASTER: filtri compatti ================= */
+(function(){
+  const lt = document.getElementById('listTools'), q = document.getElementById('q'), rows = lt && lt.querySelector('.rows'); if(!lt || !q || !rows) return;
+  const row = document.createElement('div'); row.className = 'frow'; q.before(row); row.appendChild(q);
+  const fb = document.createElement('button'); fb.type = 'button'; fb.id = 'fBtn'; fb.className = 'icon-btn'; fb.setAttribute('aria-expanded','false');
+  fb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtri<span id="fBadge"></span>'; row.appendChild(fb);
+  fb.onclick = () => { const o = lt.classList.toggle('open'); fb.setAttribute('aria-expanded',String(o)); };
+  const upd = () => { let n = 0; try{ if(f.lv!==0) n++; if(f.st!==-1) n++; if(f.cat!=='') n++; }catch(_){} const b = document.getElementById('fBadge'); if(b) b.textContent = n || ''; };
+  const _rf7 = renderFilters; renderFilters = function(){ _rf7(); upd(); };
+  upd();
+})();
+
+/* ================= accesso: benvenuto ================= */
+let helloName = '';
+document.addEventListener('submit', e => { if(e.target && e.target.id==='lf'){ const u = (document.getElementById('lu')||{}).value; if(u){ helloName = u.trim().split(/\s+/)[0]; } } }, true);
+const _boot7 = boot;
+boot = function(){
+  _boot7.apply(this, arguments);
+  if(!helloName) return; const nm = helloName.charAt(0).toUpperCase()+helloName.slice(1); helloName = '';
+  const h = new Date().getHours(), s = h<12 ? 'Buongiorno' : h<18 ? 'Buon pomeriggio' : 'Buonasera';
+  const sub = pick(['Pronto a fare un gran lavoro?','Oggi si chiude qualcosa di bello.','Il Master ti aspetta.','Si parte!','Un contatto alla volta.']);
+  const el = document.createElement('div'); el.id = 'hello'; el.setAttribute('role','status');
+  el.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#vx"/></svg><h2>${s}, ${esc(nm)}!</h2><p>${sub}</p><i></i>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.classList.add('out'),1500); setTimeout(()=>el.remove(),2300);
+};
+
+/* ================= micro-testi ================= */
+const MT = {
+  'Salvato':['Salvato!','Fatto, tutto al sicuro.','Messo in cassaforte.'],
+  'Appuntamento aggiunto':['In agenda!','Appuntamento fissato.','Segnato, non te lo scordi.'],
+  'Appuntamento aggiornato':['Agenda aggiornata.','Modifica fatta.'],
+  'Appuntamento eliminato':['Cancellato dall’agenda.','Via, libero!'],
+  'Numero salvato':['Numero salvato, ora puoi chiamare.','Numero in rubrica!'],
+  'Aggiornato':['Tutto fresco!','Aggiornato.']
+};
+const _t7 = toast;
+toast = function(m){ const v = MT[m]; return _t7(v ? pick(v) : m); };
+const EM = [
+  [/Il master è vuoto/, 'Qui c’è ancora un gran silenzio. Tocca “Nuovo contatto” e dai il via al Master!'],
+  [/Nessun contatto con questi filtri/, 'Nessuno con questi filtri. Prova ad allargare la ricerca.'],
+  [/Nessun cliente trovato/, 'Nessun cliente con questo nome. Controlla come l’hai scritto.'],
+  [/Nessuna polizza registrata/, 'Ancora nessuna polizza: la prima è sempre la più bella. Tocca “+ Polizza”!'],
+  [/Nessuna polizza trovata/, 'Nessuna polizza qui. Prova con un altro filtro o mese.'],
+  [/Nessun appuntamento/, 'Agenda libera! Un caffè con qualcuno? Tocca “+ Appuntamento”.']
+];
+const _r7 = render;
+render = function(){ _r7.apply(this, arguments); microEmpty(); };
+function microEmpty(){ document.querySelectorAll('.empty').forEach(e => { if(e.dataset.mt) return; const tx = e.textContent; const m = EM.find(x=>x[0].test(tx)); if(m){ e.textContent = m[1]; e.dataset.mt = '1'; } }); }
+const mo = new MutationObserver(() => microEmpty()); ['calendario','list','portafoglio','fatturato'].forEach(i=>{ const n = document.getElementById(i); if(n) mo.observe(n,{childList:true,subtree:true}); });
+})();
+</script>
