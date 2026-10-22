@@ -2667,3 +2667,18 @@ render = function(){
 };
 })();
 </script>
+<style id="vx12css">
+#calF [data-f="scad"],#at [data-v="scad"]{display:none!important}
+</style>
+<script id="vx12js">(function(){
+const _rc12 = renderCal;
+renderCal = function(){
+  let sec = 'app'; try{ sec = localStorage.getItem('vx-calsec') || 'app'; }catch(_){}
+  if(sec!=='app'){ _rc12(); return; }
+  if(typeof calF==='string' && calF.split(',').includes('scad')){ const k = calF.split(',').filter(x=>x!=='scad'); calF = k.length ? k.join(',') : 'all'; }
+  loadCal(); const sp = port, sc = cal;
+  try{ port = []; cal = sc.filter(a => a.tipo!=='scad'); _rc12(); }
+  finally{ port = sp; cal = sc; }
+};
+})();
+</script>
