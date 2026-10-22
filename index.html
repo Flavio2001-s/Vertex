@@ -2288,3 +2288,10 @@ renderSummary = function(){
 };
 })();
 </script>
+<script id="vx6js">(function(){
+const lb = document.createElement('label'); lb.setAttribute('aria-hidden','true'); lb.style.cssText = 'position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden';
+const ip = document.createElement('input'); ip.type = 'checkbox'; ip.setAttribute('switch',''); ip.tabIndex = -1; lb.appendChild(ip); document.body.appendChild(lb);
+const tap = () => { try{ if(navigator.vibrate){ navigator.vibrate(8); return; } lb.click(); }catch(e){} };
+document.addEventListener('click', e => { if(e.target.closest && e.target.closest('button,.chip,.item,.pill,[role="button"],a.btn,#tabs')) tap(); }, true);
+})();
+</script>
