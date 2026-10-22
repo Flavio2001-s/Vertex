@@ -1454,7 +1454,7 @@ function renderCal(){
   const Y = new Date().getFullYear(), inP = a => calPer==='all' || (+a.d.slice(0,4)===Y && mths(calPer).includes(+a.d.slice(5,7)-1));
   const base = cal.filter(inP), qSel = calPer==='all' ? -1 : isMonth(calPer) ? Math.floor(+calPer.slice(1)/3) : calPer;
   const plabel = calPer==='all' ? '' : isMonth(calPer) ? MESI[+calPer.slice(1)] + ' ' + Y : (calPer+1) + '° trimestre ' + Y;
-  const fl = base.filter(a => calF==='all' || a.tipo===calF);
+  const fl = base.filter(a => calF==='all' || calF.split(',').includes(a.tipo));
   const up = fl.filter(a => calPer!=='all' || a.d >= t).sort((a,b)=>a.d.localeCompare(b.d) || (a.t||'99').localeCompare(b.t||'99'));
   const past = calPer!=='all' ? [] : fl.filter(a => a.d < t).sort((a,b)=>b.d.localeCompare(a.d) || (a.t||'').localeCompare(b.t||''));
   const today = cal.filter(a=>a.d===t).length;
@@ -1464,7 +1464,7 @@ function renderCal(){
   let h = `<div class="sumwrap">
   <div class="card" style="padding:12px 14px"><div class="row2"><b>Oggi</b><span class="ds"><b>${today}</b> ${today===1?'appuntamento':'appuntamenti'}</span></div>
     ${next?`<p class="hint" style="margin:6px 0 0"><b>Prossimo:</b> ${esc(next.tit)} · ${dayLabel(next.d)}${next.t?' alle '+esc(next.t):''}</p>`:'<p class="hint" style="margin:6px 0 0">Nessun appuntamento in arrivo.</p>'}</div>
-  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali'],['scad','Rinnovi e scadenze']].map(([v,l])=>{ const n = v==='all' ? base.length : base.filter(a=>a.tipo===v).length; return `<button type="button" class="chip" data-f="${v}" aria-pressed="${calF===v}">${l}${n?` <b>${n}</b>`:''}</button>`; }).join('')}</div>
+  <div class="chips" id="calF" style="justify-content:center;flex-wrap:wrap">${[['all','Tutti'],['master','Master'],['crm','CRM'],['recl','Reclutamento'],['aff','Affiancamento'],['pers','Personali'],['scad','Rinnovi e scadenze']].map(([v,l])=>{ const n = v==='all' ? base.length : base.filter(a=>a.tipo===v).length; return `<button type="button" class="chip" data-f="${v}" aria-pressed="${v==='all' ? calF==='all' : calF.split(',').includes(v)}">${l}${n?` <b>${n}</b>`:''}</button>`; }).join('')}</div>
   <div class="chips" id="calP" style="justify-content:center;flex-wrap:wrap">${[['all','Tutto'],[0,'1° trim.'],[1,'2° trim.'],[2,'3° trim.'],[3,'4° trim.']].map(([v,l])=>`<button type="button" class="chip" data-pp="${v}" aria-pressed="${calPer===v || (isMonth(calPer) && v===qSel)}">${l}</button>`).join('')}</div>
   ${qSel>=0 ? `<div class="chips" style="justify-content:center;flex-wrap:nowrap">${[0,1,2].map(k=>qSel*3+k).map(i=>`<button type="button" class="chip" data-pp="m${i}" aria-pressed="${calPer==='m'+i}" style="flex:1">${MESI[i]}</button>`).join('')}</div>` : ''}
   <div class="list" style="margin-top:0">${up.length ? group(up) : '<div class="empty">Nessun appuntamento'+(calPer==='all'?'':' in questo periodo')+'.<br>Tocca “+ Appuntamento” per aggiungerne uno.</div>'}</div>`;
@@ -1477,7 +1477,7 @@ function renderCal(){
 function openAppt(id){
   loadCal();
   const ex = id ? cal.find(x=>x.id===id) : null;
-  const a = ex ? {...ex} : {id:'a'+Date.now().toString(36), d:todayISO(), t:'', tipo: calF==='all'?'master':calF, tit:'', note:''};
+  const a = ex ? {...ex} : {id:'a'+Date.now().toString(36), d:todayISO(), t:'', tipo: calF==='all'?'master':calF.split(',')[0], tit:'', note:''};
   const draw = ()=>{
     $('layer').innerHTML = `<div class="scrim" id="scrim"></div>
     <div class="sheet" role="dialog" aria-label="Appuntamento"><div class="sheet-in">
@@ -1502,7 +1502,7 @@ function openAppt(id){
 }
 $('calendario').addEventListener('click',e=>{
   const pp = e.target.closest('[data-pp]'); if(pp){ const v = pp.dataset.pp; calPer = v==='all' ? 'all' : v[0]==='m' ? v : +v; renderCal(); return; }
-  const f = e.target.closest('[data-f],[data-cg]'); if(f){ calF = f.dataset.f || f.dataset.cg; renderCal(); return; }
+  const f = e.target.closest('[data-f],[data-cg]'); if(f){ if(f.dataset.f && f.dataset.f!=='all'){ const cur = calF==='all' ? [] : calF.split(','), i = cur.indexOf(f.dataset.f); if(i>=0) cur.splice(i,1); else cur.push(f.dataset.f); calF = cur.length ? cur.join(',') : 'all'; } else calF = f.dataset.f || f.dataset.cg; renderCal(); return; }
   if(e.target.closest('#calPast')){ calPast = !calPast; renderCal(); return; }
   const it = e.target.closest('[data-ap]'); if(it) openAppt(it.dataset.ap);
 });
