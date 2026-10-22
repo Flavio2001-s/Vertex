@@ -2462,3 +2462,24 @@ function microEmpty(){ document.querySelectorAll('.empty').forEach(e => { if(e.d
 const mo = new MutationObserver(() => microEmpty()); ['calendario','list','portafoglio','fatturato'].forEach(i=>{ const n = document.getElementById(i); if(n) mo.observe(n,{childList:true,subtree:true}); });
 })();
 </script>
+<style id="vx8css">
+/* schede (contatto, polizza, cliente, appuntamento): etichette coerenti */
+.sheet .fieldname{text-align:left!important;color:var(--muted)!important;font-size:.78rem;letter-spacing:.06em}
+:root[data-theme="dark"] .sheet .fieldname{color:var(--muted)!important}
+/* pulsanti: "Salva e aggiungi altro" su riga propria */
+.sheet .actions{display:flex;flex-wrap:wrap;gap:8px}
+.sheet .actions .btn{flex:1 1 0;min-width:0;white-space:normal}
+#okMore{order:-1;flex:1 1 100%!important}
+/* celebrazioni: colori coerenti con l'app */
+#party{background:rgba(20,8,12,.46)}
+.pbadge{background:var(--grad);box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 38%,transparent)}
+.pbadge.sun{background:linear-gradient(135deg,#ffb020,#ff7a1a);box-shadow:0 8px 20px rgba(255,140,30,.4)}
+.pprov i::after{background:var(--grad-sun,linear-gradient(90deg,#ffb020,#ff7a1a))}
+/* scheda scorrevole con spazio sotto */
+.sheet-in{padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+</style>
+<script id="vx8js">(function(){
+const L = document.getElementById('layer'); if(!L) return;
+L.addEventListener('focusin', e => { const el = e.target; if(!el.matches || !el.matches('input,textarea,select')) return; setTimeout(()=>{ try{ el.scrollIntoView({block:'center',behavior:'smooth'}); }catch(_){} }, 320); });
+})();
+</script>
