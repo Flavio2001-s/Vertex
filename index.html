@@ -2483,3 +2483,10 @@ const L = document.getElementById('layer'); if(!L) return;
 L.addEventListener('focusin', e => { const el = e.target; if(!el.matches || !el.matches('input,textarea,select')) return; setTimeout(()=>{ try{ el.scrollIntoView({block:'center',behavior:'smooth'}); }catch(_){} }, 320); });
 })();
 </script>
+<style id="vx9css">
+/* iPhone: campi a 16px = niente zoom automatico al tocco */
+input,select,textarea,.sheet input,.sheet select,.sheet textarea,.f input,.f textarea,select.cat,.search{font-size:16px!important}
+input[type="date"],input[type="month"],input[type="time"]{min-height:46px;-webkit-appearance:none;appearance:none;line-height:1.2}
+.sheet,.sheet-in{max-width:100%;overflow-x:hidden}
+.sheet input,.sheet select,.sheet textarea{max-width:100%;min-width:0}
+</style>
