@@ -2490,3 +2490,30 @@ input[type="date"],input[type="month"],input[type="time"]{min-height:46px;-webki
 .sheet,.sheet-in{max-width:100%;overflow-x:hidden}
 .sheet input,.sheet select,.sheet textarea{max-width:100%;min-width:0}
 </style>
+<style id="vx10css">
+#bkBanner{font-weight:700}
+</style>
+<script id="vx10js">(function(){
+const LIM = 3; /* giorni */
+async function quickBackup(){
+  const txt = backupJson(), name = 'Vertex-backup-' + todayISO() + '.json';
+  try{
+    const f = new File([txt], name, {type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], title:'Backup Vertex'}); markBk(); toast('Backup salvato'); return; }
+    if(navigator.share){ await navigator.share({text:txt, title:'Backup Vertex'}); markBk(); toast('Backup salvato'); return; }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(txt); markBk(); toast('Backup copiato: incollalo nelle Note'); }catch(e){ openBackup(); }
+}
+updateBk = function(){
+  let b = document.getElementById('bkBanner');
+  if(!b){ b = document.createElement('button'); b.id = 'bkBanner'; b.type = 'button'; b.hidden = true; const top = document.querySelector('.top'); if(top) top.appendChild(b); }
+  b.onclick = quickBackup;
+  const has = (typeof contacts!=='undefined' && contacts.length) || (typeof fat!=='undefined' && fat && fat.pol && fat.pol.length) || (typeof port!=='undefined' && port && port.length);
+  const t = lastBk(), days = t ? Math.floor((Date.now()-t)/864e5) : null;
+  if(!has || (t && days < LIM)){ b.hidden = true; return; }
+  b.textContent = t ? `Ultimo backup ${days} giorni fa · tocca per salvarlo` : 'Nessun backup ancora · tocca per salvarlo ora';
+  b.hidden = false;
+};
+try{ updateBk(); }catch(_){}
+})();
+</script>
