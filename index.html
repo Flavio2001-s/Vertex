@@ -2682,3 +2682,91 @@ renderCal = function(){
 };
 })();
 </script>
+<style id="vx13css">
+:root:root{--vr:18px;--navy:linear-gradient(135deg,#2a2226,#4b3b43);--teal:linear-gradient(135deg,#4d0f1d,#9d1c2c)}
+/* 2 ritmo e superfici */
+.sumwrap{gap:12px}
+.card,.ob-card{border-radius:var(--vr)}
+.card{box-shadow:0 1px 2px rgba(27,16,21,.05)}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .ob-card{border-color:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .card,:root:not([data-theme="light"]) .ob-card{border-color:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}}
+/* 3 tipografia */
+.big,.big2,.ds,.dl,.aptime,.lvn,.pill,td,th,.count,.ob-card b{font-variant-numeric:tabular-nums}
+.fieldname,.seclbl,.lbl{color:var(--muted)!important;letter-spacing:.08em;font-size:.72rem;font-weight:700;text-transform:uppercase}
+#portafoglio .card:has(>.big:not(.sm)) .fieldname,#stipendio .card:has(>.big:not(.sm)) .fieldname,.stipHero .fieldname,.hbox.apeh .lbl,.hbox.apeh p{color:rgba(255,255,255,.78)!important}
+/* 1 gerarchia nella Home */
+.hgrid{grid-template-columns:1fr 1.35fr}
+.hbox.apeh{background:var(--grad)!important;border:0!important;color:#fff;box-shadow:0 12px 26px -12px color-mix(in srgb,var(--accent) 70%,transparent)}
+.hbox.apeh .ring .tr{stroke:rgba(255,255,255,.28)!important}
+.hbox.apeh .ring .pg{stroke:#fff!important}
+.hbox.apeh .ring text{fill:#fff!important}
+.hbox .big2{font-size:2.6rem;line-height:1}
+/* 4 colore: rosso per azioni, grigi per il resto */
+.stipHero{box-shadow:0 14px 34px -14px rgba(90,14,28,.55)!important}
+/* barra backup discreta, solo in Home */
+#bkBanner{display:block;width:auto;margin:0 auto;padding:4px 12px!important;border-radius:999px!important;font-size:.72rem!important;font-weight:700;background:var(--accent-soft)}
+body:not([data-view="sum"]) #bkBanner{display:none!important}
+/* 6 icone uniformi */
+#tabs button svg,.hq svg,.icon-btn svg{stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hq svg{width:22px;height:22px}
+/* 8 tocco comodo */
+.btn{min-height:48px}
+.chip{min-height:38px}
+.icon-btn{min-height:40px}
+.sc-it .rb{min-height:36px;padding:8px 14px}
+#tabs button{min-height:54px}
+.ob-step button{width:48px;height:48px}
+.hrow,.item{min-height:52px}
+/* 7 movimento */
+@keyframes vsheet{from{transform:translateY(46px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes vfade{from{opacity:0}to{opacity:1}}
+@keyframes vpop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sheet{animation:vsheet .36s cubic-bezier(.2,1.1,.3,1)}
+.scrim{animation:vfade .25s ease}
+.list>.item,.sc-it,.cgd .item{animation:vpop .35s cubic-bezier(.2,.9,.3,1) both}
+.list>.item:nth-child(2),.sc-it:nth-child(2){animation-delay:40ms}.list>.item:nth-child(3),.sc-it:nth-child(3){animation-delay:80ms}.list>.item:nth-child(4),.sc-it:nth-child(4){animation-delay:120ms}.list>.item:nth-child(5),.sc-it:nth-child(5){animation-delay:160ms}.list>.item:nth-child(n+6){animation-delay:200ms}
+.btn,.chip,.item,.hrow,.icon-btn,.rb,#tabs button,.fab,.hq button{transition:transform .12s ease,background-color .2s,box-shadow .2s}
+.btn:active,.chip:active,.item:active,.hrow:active,.icon-btn:active,.rb:active,.hq button:active{transform:scale(.97)}
+.fab:active{transform:scale(.94)}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim,.list>.item,.sc-it,.cgd .item{animation:none}.btn,.chip,.item{transition:none}}
+/* 9 stati vuoti */
+.empty{padding:34px 18px;line-height:1.5}
+.empty::before{content:"";display:block;width:54px;height:54px;margin:0 auto 12px;border-radius:50%;background:var(--accent-soft);box-shadow:inset 0 0 0 10px color-mix(in srgb,var(--accent) 8%,transparent)}
+/* 10 stili completi */
+.look{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.look button{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:10px 4px;font-weight:700;font-size:.82rem;display:grid;gap:6px;justify-items:center}
+.look button i{display:block;width:100%;height:18px;border-radius:7px}
+.look button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+html[data-look="minimal"]{--vl:1}
+:root:root:root[data-look="minimal"]{--accent:#2c2a2e;--accent-soft:rgba(44,42,46,.1);--grad:linear-gradient(135deg,#2c2a2e,#55505a);--navy:linear-gradient(135deg,#2c2a2e,#55505a);--teal:linear-gradient(135deg,#3a3640,#5f5967)}
+:root[data-theme="dark"][data-look="minimal"]{--accent:#e9e4ea;--accent-fg:#1b1719;--accent-soft:rgba(233,228,234,.12)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"])[data-look="minimal"]{--accent:#e9e4ea;--accent-fg:#1b1719;--accent-soft:rgba(233,228,234,.12)}}
+:root:root:root[data-look="oceano"]{--accent:#0f8f98;--accent-soft:rgba(15,143,152,.14);--grad:linear-gradient(135deg,#0fb0b5,#1b8fd6);--navy:linear-gradient(135deg,#16254d,#2f4f9e);--teal:linear-gradient(135deg,#0a7a74,#14b8a6)}
+html[data-look] #tabs button[aria-pressed="true"],html[data-look] .chip[aria-pressed="true"],html[data-look] .fab{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--accent-fg,#fff)!important}
+html[data-look] .fab{background:var(--grad)!important;color:#fff!important}
+html[data-look="minimal"] .hbox.apeh,html[data-look="oceano"] .hbox.apeh{color:#fff}
+html[data-look="minimal"][data-theme="dark"] .hbox.apeh *{color:#fff}
+</style>
+<script id="vx13js">(function(){
+const rd = (k,d) => { try{ return localStorage.getItem(k) || d; }catch(_){ return d; } };
+const wr = (k,v) => { try{ localStorage.setItem(k,v); }catch(_){} };
+const setLook = v => { if(v && v!=='classico') document.documentElement.dataset.look = v; else delete document.documentElement.dataset.look; };
+setLook(rd('vx-look','classico'));
+const _sv13 = syncView;
+syncView = function(){ _sv13(); try{ document.body.dataset.view = view; }catch(_){} };
+try{ document.body.dataset.view = view; }catch(_){}
+const _rs13 = renderSummary;
+renderSummary = function(){
+  _rs13();
+  const w = document.querySelector('#summary .sumwrap'); if(!w) return;
+  const hb = w.querySelectorAll('.hgrid .hbox')[1]; if(hb) hb.classList.add('apeh');
+  const card = w.querySelector('.vxp'); if(!card || card.querySelector('.look')) return;
+  const cur = rd('vx-look','classico');
+  const S = [['classico','Classico','linear-gradient(135deg,#b3121a,#e23a2b)'],['minimal','Minimal','linear-gradient(135deg,#2c2a2e,#55505a)'],['oceano','Oceano','linear-gradient(135deg,#0fb0b5,#1b8fd6)']];
+  const d = document.createElement('div');
+  d.innerHTML = '<div class="fieldname" style="margin-top:6px">Stile</div><div class="look" role="group" aria-label="Stile">'+S.map(([k,n,g])=>'<button type="button" data-look="'+k+'" aria-pressed="'+(cur===k)+'"><i style="background:'+g+'"></i>'+n+'</button>').join('')+'</div>';
+  card.appendChild(d);
+  d.addEventListener('click', e => { const b = e.target.closest('[data-look]'); if(!b) return; wr('vx-look',b.dataset.look); setLook(b.dataset.look); d.querySelectorAll('[data-look]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); try{ const m = document.querySelector('meta[name="theme-color"]'); }catch(_){} });
+};
+})();
+</script>
