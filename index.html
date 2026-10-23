@@ -2953,3 +2953,78 @@ fill(); setTimeout(fill, 300);
 #vxbg b{width:calc(var(--s)*1.4);height:calc(var(--s)*1.4)}
 </style>
 <script id="vx19js">(function(){var b=document.querySelectorAll('#vxbg b');for(var i=7;i<b.length;i++)b[i].remove();})();</script>
+<style id="vx20css">
+.pill{position:relative}
+.pill.vxpop{animation:vxpop .6s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes vxpop{0%{transform:scale(.62) rotate(-9deg);box-shadow:0 0 0 0 color-mix(in srgb,currentColor 50%,transparent)}45%{transform:scale(1.22) rotate(2deg)}100%{transform:scale(1) rotate(0);box-shadow:0 0 0 16px color-mix(in srgb,currentColor 0%,transparent)}}
+.vxsw{display:inline-block;animation:vxsw .42s cubic-bezier(.2,.9,.3,1) both}
+@keyframes vxsw{0%{transform:translateY(80%);opacity:0}100%{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.pill.vxpop,.vxsw{animation:none}}
+</style>
+<script id="vx20js">(function(){
+/* animazione tastino stato/livello */
+const lst = document.getElementById('list');
+if(lst) lst.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-cycle]'); if(!b) return;
+  const id = b.dataset.id, kind = b.dataset.cycle;
+  setTimeout(() => {
+    const n = document.querySelector('#list [data-cycle="'+kind+'"][data-id="'+id+'"]'); if(!n) return;
+    n.innerHTML = '<span class="vxsw">' + n.innerHTML + '</span>';
+    n.classList.add('vxpop'); setTimeout(() => n.classList.remove('vxpop'), 700);
+  }, 0);
+}, true);
+/* eliminare o modificare una polizza aggiorna Portafoglio e Master */
+const PKM = {PU:'pu',RIC:'pa',DNA:'dna',WEL:'dna',PROT:'tcm'};
+const rnd = n => Math.round(n*100)/100;
+let snapP = null, snapPort = null, busy = false;
+const snap = () => { try{
+  snapP = new Map((fat.pol||[]).map(p => [p.id, Object.assign({}, p)]));
+  snapPort = new Map(port.map(c => [c.id, {id:c.id, cid:c.cid, name:pname(c)}]));
+}catch(_){} };
+const hasVal = c => ['pu','pa','dna','tcm','ltc'].some(k => (c.p && +c.p[k]) > 0);
+const findPort = cli => { const k = tokKey(cli||''); return k ? port.find(x => tokKey(pname(x)) === k) : null; };
+const stillHasPol = cli => { const k = tokKey(cli||''); return (fat.pol||[]).some(p => tokKey(p.cli||'') === k); };
+function revert(cid, name){
+  const k = (cid && contacts.find(x => x.id === cid)) || contacts.find(x => tokKey(x.n) === tokKey(name||''));
+  if(!k || k.s !== 2) return false;
+  if(port.some(x => (cid && x.cid === cid) || tokKey(pname(x)) === tokKey(k.n))) return false;
+  if(stillHasPol(k.n)) return false;
+  k.s = 1; if(k.c === 'Clienti') k.c = ''; return true;
+}
+function reconcilePol(){
+  if(busy || !snapP) return;
+  const cur = new Map((fat.pol||[]).map(p => [p.id, p]));
+  const removed = [...snapP.values()].filter(o => !cur.has(o.id));
+  const changed = [...cur.values()].filter(n => { const o = snapP.get(n.id); return o && (o.v !== n.v || o.k !== n.k || o.cli !== n.cli); });
+  if(removed.length + changed.length !== 1) return;
+  busy = true;
+  try{
+    const touched = new Set();
+    const adj = (rec, sign) => { if(!rec || !(rec.v > 0)) return; const pc = findPort(rec.cli), pk = PKM[rec.k]; if(!pc || !pk) return; pc.p[pk] = Math.max(0, rnd((+pc.p[pk]||0) + sign*rec.v)); touched.add(pc); };
+    if(removed.length) adj(removed[0], -1); else { adj(snapP.get(changed[0].id), -1); adj(changed[0], +1); }
+    if(!touched.size) return;
+    let cdirty = false;
+    touched.forEach(pc => {
+      if(!hasVal(pc) && !stillHasPol(pname(pc))){
+        const i = port.indexOf(pc); if(i >= 0) port.splice(i, 1);
+        if(revert(pc.cid, pname(pc))) cdirty = true;
+      }
+    });
+    savePort(); if(cdirty) save();
+    setTimeout(() => { try{ toast(removed.length ? 'Polizza eliminata, Portafoglio aggiornato' : 'Polizza aggiornata, Portafoglio aggiornato'); }catch(_){} }, 80);
+  }catch(_){} finally{ busy = false; }
+}
+function reconcilePort(){
+  if(busy || !snapPort) return;
+  const cur = new Set(port.map(c => c.id));
+  const removed = [...snapPort.values()].filter(o => !cur.has(o.id));
+  if(removed.length !== 1) return;
+  busy = true;
+  try{ const o = removed[0]; if(revert(o.cid, o.name)) save(); }catch(_){} finally{ busy = false; }
+}
+const _sf = saveFat; saveFat = function(){ try{ reconcilePol(); }catch(_){} return _sf.apply(this, arguments); };
+const _sp = savePort; savePort = function(){ try{ reconcilePort(); }catch(_){} return _sp.apply(this, arguments); };
+const _rn = render; render = function(){ const r = _rn.apply(this, arguments); snap(); return r; };
+snap();
+})();
+</script>
