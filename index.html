@@ -2919,3 +2919,33 @@ scan();
 document.addEventListener('visibilitychange', () => { bg.classList.toggle('paused', document.hidden); document.querySelectorAll('.vxhb').forEach(e => e.classList.toggle('paused', document.hidden)); });
 })();
 </script>
+<style id="vx18css">
+#vxbg b{bottom:auto;top:var(--y);opacity:1;animation:vdr var(--d) ease-in-out infinite alternate;animation-delay:var(--dl)}
+@keyframes vdr{0%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(var(--ax),var(--ay),0) scale(1.06)}66%{transform:translate3d(var(--bx),var(--by),0) scale(.96)}100%{transform:translate3d(var(--cx),var(--cy),0) scale(1.04)}}
+.vxhb b{bottom:auto;top:var(--y);opacity:1;animation:vdrh var(--d) ease-in-out infinite alternate;animation-delay:var(--dl)}
+@keyframes vdrh{0%{transform:translate3d(0,0,0)}33%{transform:translate3d(var(--ax),var(--ay),0)}66%{transform:translate3d(var(--bx),var(--by),0)}100%{transform:translate3d(var(--cx),var(--cy),0)}}
+.hbox.apeh .vxhb{display:none!important}
+.stipHero .vxhb b{background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.30) 0,rgba(255,255,255,.09) 45%,transparent 74%);border-color:rgba(255,255,255,.32)}
+#stipendio .stipHero::before{animation:vdrh 17s ease-in-out infinite alternate;--ax:-34px;--ay:30px;--bx:-12px;--by:62px;--cx:-46px;--cy:12px}
+#stipendio .stipHero::after{animation:vdrh 21s ease-in-out infinite alternate -7s;--ax:40px;--ay:-26px;--bx:70px;--by:-8px;--cx:22px;--cy:-48px}
+@media (prefers-reduced-motion:reduce){#stipendio .stipHero::before,#stipendio .stipHero::after{animation:none}}
+</style>
+<script id="vx18js">(function(){
+const bg = document.getElementById('vxbg'); if(!bg) return;
+const R = (a,b) => a + Math.random()*(b-a);
+const P = (m) => Math.round(R(-m,m)) + 'px';
+function bubbles(n, smin, smax, dmin, dmax, m){
+  let h = '';
+  for(let i=0;i<n;i++){
+    const d = R(dmin,dmax);
+    h += '<b style="--x:'+R(-6,88).toFixed(1)+'%;--y:'+R(-4,86).toFixed(1)+'%;--s:'+Math.round(R(smin,smax))+'px;--d:'+d.toFixed(1)+'s;--dl:-'+R(0,d).toFixed(1)+'s;--ax:'+P(m)+';--ay:'+P(m)+';--bx:'+P(m)+';--by:'+P(m)+';--cx:'+P(m)+';--cy:'+P(m)+'"></b>';
+  }
+  return h;
+}
+bg.innerHTML = bubbles(10, 110, 280, 30, 55, 90);
+function fill(){ document.querySelectorAll('.stipHero .vxhb').forEach(e => { if(!e.dataset.v18){ e.dataset.v18 = 1; e.innerHTML = bubbles(7, 50, 130, 16, 28, 55); } }); }
+const mo = new MutationObserver(() => { clearTimeout(fill.t); fill.t = setTimeout(fill, 80); });
+const st = document.getElementById('stipendio'); if(st) mo.observe(st, {childList:true, subtree:true});
+fill(); setTimeout(fill, 300);
+})();
+</script>
