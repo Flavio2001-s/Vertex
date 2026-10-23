@@ -2770,3 +2770,76 @@ renderSummary = function(){
 };
 })();
 </script>
+<style id="vx14css">
+/* vetro su barre */
+.top{backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5);background:color-mix(in srgb,var(--bg) 80%,transparent)!important}
+#tabs{backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5)}
+/* atmosfera */
+body::after{content:"";position:fixed;inset:-25%;z-index:0;pointer-events:none;opacity:.55;background:radial-gradient(38% 28% at 18% 12%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 70%),radial-gradient(34% 26% at 85% 78%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 70%);animation:vdrift 22s ease-in-out infinite alternate}
+@keyframes vdrift{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(4%,3%,0) scale(1.12)}}
+/* cambio sezione */
+@keyframes vtab{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.vx-in{animation:vtab .42s cubic-bezier(.2,.9,.3,1)}
+/* barre e anelli che si riempiono */
+@keyframes vgrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes vgrowy{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.stack i,.ob-bar i,.bar i{transform-origin:left center;animation:vgrow .9s cubic-bezier(.2,.9,.3,1) both}
+.ob-hist i{transform-origin:bottom center;animation:vgrowy .8s cubic-bezier(.2,.9,.3,1) both}
+.ob-hist>div:nth-child(2) i{animation-delay:60ms}.ob-hist>div:nth-child(3) i{animation-delay:120ms}.ob-hist>div:nth-child(4) i{animation-delay:180ms}.ob-hist>div:nth-child(5) i{animation-delay:240ms}.ob-hist>div:nth-child(6) i{animation-delay:300ms}
+/* riflesso sulla carta principale */
+.hbox.apeh{position:relative;overflow:hidden}
+.hbox.apeh::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.3),transparent);transform:skewX(-18deg);animation:vshine 2.2s .7s ease 1 both;pointer-events:none}
+@keyframes vshine{from{left:-70%}to{left:150%}}
+/* icona del tab attivo */
+@keyframes vtabpop{0%{transform:scale(.7)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+#tabs button[aria-pressed="true"] svg{animation:vtabpop .45s cubic-bezier(.3,1.6,.5,1)}
+/* pulsante principale che respira */
+@keyframes vbreath{0%,100%{box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 30%,transparent)}50%{box-shadow:0 10px 28px color-mix(in srgb,var(--accent) 55%,transparent)}}
+.fab{animation:vbreath 3.6s ease-in-out infinite}
+/* avvisi */
+@keyframes vtoast{from{opacity:0;transform:translate(-50%,16px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.toast{animation:vtoast .35s cubic-bezier(.2,1.2,.3,1);backdrop-filter:blur(10px)}
+/* scheda: maniglia */
+.sheet::before{content:"";display:block;width:42px;height:4px;border-radius:2px;background:var(--line);margin:-6px auto 12px}
+/* onda al tocco */
+.vx-rpw{position:relative;overflow:hidden}
+.vx-rp{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.18;transform:scale(0);animation:vrp .55s ease-out forwards}
+@keyframes vrp{to{transform:scale(1);opacity:0}}
+/* comparsa allo scorrimento */
+html.vx-io .vx-rv{opacity:0;transform:translateY(16px)}
+html.vx-io .vx-rv.vx-vis{opacity:1;transform:none;transition:opacity .5s ease,transform .55s cubic-bezier(.2,.9,.3,1)}
+/* cambio tema morbido */
+html.vx-tt *,html.vx-tt *::before{transition:background-color .4s,color .4s,border-color .4s,fill .4s,stroke .4s!important}
+@media (prefers-reduced-motion:reduce){body::after,.vx-in,.stack i,.ob-bar i,.ob-hist i,.hbox.apeh::after,#tabs button svg,.fab,.toast,.vx-rp{animation:none!important}html.vx-io .vx-rv{opacity:1;transform:none}}
+</style>
+<script id="vx14js">(function(){
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ids = {sum:'summary',list:'list',fat:'fatturato',port:'portafoglio',stip:'stipendio',cal:'calendario'};
+let last = null;
+const _sv14 = syncView;
+syncView = function(){
+  _sv14();
+  try{ if(view!==last){ const el = document.getElementById(ids[view]); if(el && last!==null && !RM){ el.classList.remove('vx-in'); void el.offsetWidth; el.classList.add('vx-in'); } last = view; } }catch(_){}
+};
+/* onda al tocco */
+document.addEventListener('pointerdown', e => {
+  if(RM) return; const t = e.target.closest && e.target.closest('.btn,.chip,.hq button,.ob-ok,.rb,.icon-btn,.look button'); if(!t) return;
+  if(getComputedStyle(t).position==='static') t.style.position = 'relative';
+  t.classList.add('vx-rpw');
+  const r = t.getBoundingClientRect(), s = Math.max(r.width,r.height)*2, sp = document.createElement('span');
+  sp.className = 'vx-rp'; sp.style.cssText = 'width:'+s+'px;height:'+s+'px;left:'+(e.clientX-r.left-s/2)+'px;top:'+(e.clientY-r.top-s/2)+'px';
+  t.appendChild(sp); setTimeout(()=>sp.remove(),600);
+}, {passive:true});
+/* comparsa allo scorrimento */
+if('IntersectionObserver' in window && !RM){
+  document.documentElement.classList.add('vx-io');
+  const io = new IntersectionObserver(es => es.forEach(en => { if(en.isIntersecting){ en.target.classList.add('vx-vis'); io.unobserve(en.target); } }), {threshold:.08});
+  let q = false;
+  const scan = () => { q = false; document.querySelectorAll('#summary .card:not(.vst):not(.vx-rv),#fatturato .card:not(.vx-rv),#stipendio .card:not(.vx-rv)').forEach(n => { n.classList.add('vx-rv'); io.observe(n); }); };
+  new MutationObserver(() => { if(!q){ q = true; requestAnimationFrame(scan); } }).observe(document.body,{childList:true,subtree:true});
+  scan();
+}
+/* cambio tema morbido */
+document.addEventListener('click', e => { if(e.target.closest && e.target.closest('#thBtn')){ const h = document.documentElement; h.classList.add('vx-tt'); setTimeout(()=>h.classList.remove('vx-tt'),500); } }, true);
+})();
+</script>
