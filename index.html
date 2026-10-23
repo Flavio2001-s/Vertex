@@ -2843,3 +2843,13 @@ if('IntersectionObserver' in window && !RM){
 document.addEventListener('click', e => { if(e.target.closest && e.target.closest('#thBtn')){ const h = document.documentElement; h.classList.add('vx-tt'); setTimeout(()=>h.classList.remove('vx-tt'),500); } }, true);
 })();
 </script>
+<style id="vx15css">
+/* alleggerimento: niente effetti pesanti che su iPhone possono far chiudere l'app */
+body::after{display:none!important}
+.top{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--bg)!important}
+#tabs{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.toast{backdrop-filter:none!important}
+.fab{animation:none!important}
+html.vx-io .vx-rv{opacity:1!important;transform:none!important}
+.vx-in{animation:vfade .25s ease!important}
+</style>
